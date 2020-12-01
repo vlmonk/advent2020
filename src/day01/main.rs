@@ -8,7 +8,8 @@ struct Repeater {
 const TARGET: i32 = 2020;
 
 impl Repeater {
-    pub fn new(data: Vec<i32>) -> Self {
+    pub fn new(mut data: Vec<i32>) -> Self {
+        data.sort();
         Self { data }
     }
 
@@ -17,13 +18,19 @@ impl Repeater {
     }
 
     fn pair_from(&self, n: usize) -> impl Iterator<Item = (i32, i32)> + '_ {
-        self.from_enum(n)
-            .flat_map(move |(i, &a)| self.from(i + 1).map(move |&b| (a, b)))
+        self.from_enum(n).flat_map(move |(i, &a)| {
+            self.from(i + 1)
+                .take_while(move |&b| a + b <= TARGET)
+                .map(move |&b| (a, b))
+        })
     }
 
     fn triple(&self) -> impl Iterator<Item = (i32, i32, i32)> + '_ {
-        self.from_enum(0)
-            .flat_map(move |(i, &a)| self.pair_from(i + 1).map(move |(b, c)| (a, b, c)))
+        self.from_enum(0).flat_map(move |(i, &a)| {
+            self.pair_from(i + 1)
+                .take_while(move |(b, c)| a + b + c <= TARGET)
+                .map(move |(b, c)| (a, b, c))
+        })
     }
 
     fn from(&self, n: usize) -> impl Iterator<Item = &i32> + '_ {
