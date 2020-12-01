@@ -1,4 +1,5 @@
 use std::fs;
+use std::time::Instant;
 
 struct Repeater {
     data: Vec<i32>,
@@ -43,6 +44,8 @@ fn parse_input(input: &str) -> Vec<i32> {
 
 fn main() {
     let input = fs::read_to_string("data/day01.txt").unwrap();
+
+    let now = Instant::now();
     let data = parse_input(&input);
     let repeater = Repeater::new(data);
 
@@ -55,6 +58,9 @@ fn main() {
         .triple()
         .find(|(a, b, c)| a + b + c == TARGET)
         .map(|(a, b, c)| a * b * c);
+
+    let total_time = now.elapsed();
+    println!("Total time: {}μs", total_time.as_micros());
 
     dbg!(task_a);
     dbg!(task_b);
