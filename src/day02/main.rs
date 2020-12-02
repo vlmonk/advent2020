@@ -34,9 +34,22 @@ impl Policy {
         Some(Self::new(min, max, char, list))
     }
 
-    pub fn valid(&self) -> bool {
+    pub fn valid_a(&self) -> bool {
         let count = self.list.iter().filter(|&&c| c == self.char).count();
         count >= self.min && count <= self.max
+    }
+
+    pub fn valid_b(&self) -> bool {
+        let len = self.list.len();
+
+        if self.min > len || self.max > len {
+            return false;
+        }
+
+        let a = self.list[self.min - 1] == self.char;
+        let b = self.list[self.max - 1] == self.char;
+
+        return a ^ b;
     }
 }
 
@@ -47,10 +60,10 @@ fn main() {
         .filter_map(|line| Policy::parse(line))
         .collect();
 
-    let task_a = data.iter().filter(|&policy| policy.valid()).count();
+    let task_a = data.iter().filter(|&policy| policy.valid_a()).count();
+    let task_b = data.iter().filter(|&policy| policy.valid_b()).count();
 
-    dbg!(&task_a);
-    println!("DONE");
+    println!("task A: {}\ntask B: {}", task_a, task_b);
 }
 
 #[cfg(test)]
@@ -65,14 +78,26 @@ mod tests {
     }
 
     #[test]
-    fn test_valid() {
+    fn test_valid_a() {
         let input = Policy::parse("1-3 a: abcde").unwrap();
-        assert_eq!(input.valid(), true);
+        assert_eq!(input.valid_a(), true);
     }
 
     #[test]
-    fn test_not_valid() {
+    fn test_not_valid_a() {
         let input = Policy::parse("1-3 b: cdefg").unwrap();
-        assert_eq!(input.valid(), false);
+        assert_eq!(input.valid_a(), false);
+    }
+
+    #[test]
+    fn test_valid_b() {
+        let input = Policy::parse("1-3 a: abcde").unwrap();
+        assert_eq!(input.valid_b(), true);
+    }
+
+    #[test]
+    fn test_not_valid_b() {
+        let input = Policy::parse("2-9 c: ccccccccc").unwrap();
+        assert_eq!(input.valid_b(), false);
     }
 }
