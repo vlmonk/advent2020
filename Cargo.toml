@@ -8,4 +8,8 @@ edition = "2018"
 name = 'day01'
 path = 'src/day01/main.rs'
 
+[[bin]]
+name = 'day02'
+path = 'src/day02/main.rs'
+
 [dependencies]
