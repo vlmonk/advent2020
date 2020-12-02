@@ -1,7 +1,7 @@
+use advent2020::measure;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs;
-use std::time::Instant;
 
 #[derive(Debug, PartialEq)]
 struct Policy {
@@ -55,18 +55,18 @@ impl Policy {
 }
 
 fn main() {
-    let input = fs::read_to_string("data/day02.txt").unwrap();
+    let ((task_a, task_b), elapsed) = measure(|| {
+        let input = fs::read_to_string("data/day02.txt").unwrap();
 
-    let now = Instant::now();
+        let data: Vec<_> = input
+            .lines()
+            .filter_map(|line| Policy::parse(line))
+            .collect();
 
-    let data: Vec<_> = input
-        .lines()
-        .filter_map(|line| Policy::parse(line))
-        .collect();
-
-    let task_a = data.iter().filter(|&policy| policy.valid_a()).count();
-    let task_b = data.iter().filter(|&policy| policy.valid_b()).count();
-    let elapsed = now.elapsed().as_micros();
+        let task_a = data.iter().filter(|&policy| policy.valid_a()).count();
+        let task_b = data.iter().filter(|&policy| policy.valid_b()).count();
+        (task_a, task_b)
+    });
 
     println!(
         "task A: {}\ntask B: {}\nTotal time: {}μs ",

@@ -1,5 +1,5 @@
+use advent2020::measure;
 use std::fs;
-use std::time::Instant;
 
 struct Repeater {
     data: Vec<i32>,
@@ -50,25 +50,28 @@ fn parse_input(input: &str) -> Vec<i32> {
 }
 
 fn main() {
-    let input = fs::read_to_string("data/day01.txt").unwrap();
+    let ((task_a, task_b), elapsed) = measure(|| {
+        let input = fs::read_to_string("data/day01.txt").unwrap();
+        let data = parse_input(&input);
+        let repeater = Repeater::new(data);
 
-    let now = Instant::now();
-    let data = parse_input(&input);
-    let repeater = Repeater::new(data);
+        let task_a = repeater
+            .pair()
+            .find(|(a, b)| a + b == TARGET)
+            .map(|(a, b)| a * b);
 
-    let task_a = repeater
-        .pair()
-        .find(|(a, b)| a + b == TARGET)
-        .map(|(a, b)| a * b);
+        let task_b = repeater
+            .triple()
+            .find(|(a, b, c)| a + b + c == TARGET)
+            .map(|(a, b, c)| a * b * c);
 
-    let task_b = repeater
-        .triple()
-        .find(|(a, b, c)| a + b + c == TARGET)
-        .map(|(a, b, c)| a * b * c);
+        (task_a, task_b)
+    });
 
-    let total_time = now.elapsed();
-    println!("Total time: {}μs", total_time.as_micros());
-
-    dbg!(task_a);
-    dbg!(task_b);
+    println!(
+        "task A: {}\ntask B: {}\nTotal time: {}μs ",
+        task_a.unwrap(),
+        task_b.unwrap(),
+        elapsed
+    );
 }
