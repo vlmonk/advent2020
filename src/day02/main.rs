@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs;
+use std::time::Instant;
 
 #[derive(Debug, PartialEq)]
 struct Policy {
@@ -55,6 +56,9 @@ impl Policy {
 
 fn main() {
     let input = fs::read_to_string("data/day02.txt").unwrap();
+
+    let now = Instant::now();
+
     let data: Vec<_> = input
         .lines()
         .filter_map(|line| Policy::parse(line))
@@ -62,8 +66,12 @@ fn main() {
 
     let task_a = data.iter().filter(|&policy| policy.valid_a()).count();
     let task_b = data.iter().filter(|&policy| policy.valid_b()).count();
+    let elapsed = now.elapsed().as_micros();
 
-    println!("task A: {}\ntask B: {}", task_a, task_b);
+    println!(
+        "task A: {}\ntask B: {}\nTotal time: {}μs ",
+        task_a, task_b, elapsed
+    );
 }
 
 #[cfg(test)]
