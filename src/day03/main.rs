@@ -21,7 +21,7 @@ impl TryFrom<char> for Object {
 }
 
 trait Field {
-    fn get(&self, x: usize, y: usize) -> Option<Object>;
+    fn solve(&self, right: usize, down: usize) -> i64;
 }
 
 struct GameField {
@@ -47,9 +47,7 @@ impl GameField {
             width,
         });
     }
-}
 
-impl Field for GameField {
     fn get(&self, x: usize, y: usize) -> Option<Object> {
         if y >= self.height {
             return None;
@@ -60,14 +58,29 @@ impl Field for GameField {
     }
 }
 
+impl Field for GameField {
+    fn solve(&self, right: usize, down: usize) -> i64 {
+        let steps = StepIterator::new(right, down);
+
+        steps
+            .scan((), |(), (x, y)| self.get(x, y))
+            .map(|o| if let Object::Tree = o { 1 } else { 0 })
+            .sum()
+    }
+}
+
 struct StepIterator {
+    right: usize,
+    down: usize,
     next_x: usize,
     next_y: usize,
 }
 
 impl StepIterator {
-    pub fn new() -> Self {
+    pub fn new(right: usize, down: usize) -> Self {
         Self {
+            right,
+            down,
             next_x: 0,
             next_y: 0,
         }
@@ -81,8 +94,8 @@ impl Iterator for StepIterator {
         let x = self.next_x;
         let y = self.next_y;
 
-        self.next_x += 3;
-        self.next_y += 1;
+        self.next_x += self.right;
+        self.next_y += self.down;
 
         Some((x, y))
     }
@@ -91,12 +104,14 @@ impl Iterator for StepIterator {
 fn main() {
     let input = fs::read_to_string("data/day03.txt").unwrap();
     let field = GameField::parse(&input).unwrap();
-    let steps = StepIterator::new();
 
-    let foo: usize = steps
-        .scan((), |(), (x, y)| field.get(x, y))
-        .map(|o| if let Object::Tree = o { 1 } else { 0 })
-        .sum();
+    let task_a = field.solve(3, 1);
 
-    dbg!(foo);
+    let task_b = field.solve(1, 1)
+        * field.solve(3, 1)
+        * field.solve(5, 1)
+        * field.solve(7, 1)
+        * field.solve(1, 2);
+
+    println!("Task A: {}\nTask B: {}", task_a, task_b);
 }
