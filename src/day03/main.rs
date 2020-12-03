@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use std::error;
 use std::fs;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Object {
     Empty,
     Tree,
@@ -32,25 +32,71 @@ struct GameField {
 
 impl GameField {
     pub fn parse(input: &str) -> Option<Self> {
-        let mut lines = input.lines();
-        let first_line = lines.next()?;
-        let chars: Result<Vec<_>, _> = first_line.chars().map(Object::try_from).collect();
-        dbg!(chars);
+        let objects: Vec<Vec<_>> = input
+            .lines()
+            .map(|l| l.chars().map(Object::try_from).collect())
+            .collect::<Result<Vec<Vec<_>>, _>>()
+            .ok()?;
 
-        return None;
+        let height = objects.len();
+        let width = objects.get(0).map(|line| line.len())?;
+
+        return Some(Self {
+            objects,
+            height,
+            width,
+        });
     }
 }
 
 impl Field for GameField {
     fn get(&self, x: usize, y: usize) -> Option<Object> {
-        return None;
+        if y >= self.height {
+            return None;
+        }
+
+        let normalized_x = x % self.width;
+        Some(self.objects[y][normalized_x])
+    }
+}
+
+struct StepIterator {
+    next_x: usize,
+    next_y: usize,
+}
+
+impl StepIterator {
+    pub fn new() -> Self {
+        Self {
+            next_x: 0,
+            next_y: 0,
+        }
+    }
+}
+
+impl Iterator for StepIterator {
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let x = self.next_x;
+        let y = self.next_y;
+
+        self.next_x += 3;
+        self.next_y += 1;
+
+        Some((x, y))
     }
 }
 
 fn main() {
     let input = fs::read_to_string("data/day03.txt").unwrap();
     let field = GameField::parse(&input).unwrap();
+    let steps = StepIterator::new();
 
-    let point = field.get(0, 0);
-    dbg!(point);
+    let foo: usize = steps
+        .scan((), |(), (x, y)| field.get(x, y))
+        .map(|o| if let Object::Tree = o { 1 } else { 0 })
+        .sum();
+
+    dbg!(foo);
 }
