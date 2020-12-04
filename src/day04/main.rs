@@ -1,3 +1,4 @@
+use advent2020::measure;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::error::Error;
@@ -181,16 +182,22 @@ impl<'a> Passprt<'a> {
 }
 
 fn main() {
-    let data = fs::read_to_string("data/day04.txt").unwrap();
-    let chunks = data.split("\n\n");
-    let passport = chunks
-        .map(|chunk| Passprt::parse(chunk))
-        .collect::<Result<Vec<_>, _>>()
-        .expect("bad input");
-    let valid = passport.iter().filter(|p| p.valid()).count();
-    let valid2 = passport.iter().filter(|p| p.valid_part2()).count();
-    dbg!(valid);
-    dbg!(valid2);
+    let ((task_a, task_b), elapsed) = measure(|| {
+        let data = fs::read_to_string("data/day04.txt").unwrap();
+        let chunks = data.split("\n\n");
+        let passport = chunks
+            .map(|chunk| Passprt::parse(chunk))
+            .collect::<Result<Vec<_>, _>>()
+            .expect("bad input");
+        let task_a = passport.iter().filter(|p| p.valid()).count();
+        let task_b = passport.iter().filter(|p| p.valid_part2()).count();
+        (task_a, task_b)
+    });
+
+    println!(
+        "task A: {}\ntask B: {}\nTotal time: {}μs ",
+        task_a, task_b, elapsed
+    );
 }
 
 #[cfg(test)]
