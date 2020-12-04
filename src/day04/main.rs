@@ -1,5 +1,13 @@
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::error::Error;
 use std::fs;
+
+#[derive(PartialEq, Debug)]
+enum Hgt {
+    Cm(u32),
+    In(u32),
+}
 
 fn parse_byr(input: &str) -> Option<u32> {
     match input.parse::<u32>() {
@@ -22,6 +30,58 @@ fn parse_eyr(input: &str) -> Option<u32> {
     }
 }
 
+fn parse_hgt(input: &str) -> Option<Hgt> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^(\d+)(in|cm)$").unwrap();
+    }
+
+    let cap = RE.captures(input)?;
+    let value = cap.get(1).map(|m| m.as_str())?;
+    let kind = cap.get(2).map(|m| m.as_str())?;
+
+    match value.parse::<u32>() {
+        Ok(value) if kind == "in" && value >= 59 && value <= 76 => Some(Hgt::In(value)),
+        Ok(value) if kind == "cm" && value >= 150 && value <= 193 => Some(Hgt::Cm(value)),
+        _ => None,
+    }
+}
+
+fn parse_hcl(input: &str) -> Option<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"#[0-9a-f]{6}").unwrap();
+    }
+
+    if RE.is_match(input) {
+        Some(input)
+    } else {
+        None
+    }
+}
+
+fn parse_ecl(input: &str) -> Option<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^(amb|blu|brn|gry|grn|hzl|oth)$").unwrap();
+    }
+
+    if RE.is_match(input) {
+        Some(input)
+    } else {
+        None
+    }
+}
+
+fn parse_pid(input: &str) -> Option<&str> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"^[0-9]{9}$").unwrap();
+    }
+
+    if RE.is_match(input) {
+        Some(input)
+    } else {
+        None
+    }
+}
+
 #[derive(Default)]
 struct Passprt<'a> {
     byr_raw: Option<&'a str>,
@@ -31,9 +91,13 @@ struct Passprt<'a> {
     eyr_raw: Option<&'a str>,
     eyr: Option<u32>,
     hgt_raw: Option<&'a str>,
+    hgt: Option<Hgt>,
     hcl_raw: Option<&'a str>,
+    hcl: Option<&'a str>,
     ecl_raw: Option<&'a str>,
+    ecl: Option<&'a str>,
     pid_raw: Option<&'a str>,
+    pid: Option<&'a str>,
     cid_raw: Option<&'a str>,
 }
 
@@ -68,6 +132,16 @@ impl<'a> Passprt<'a> {
             && self.pid_raw.is_some()
     }
 
+    pub fn valid_part2(&self) -> bool {
+        self.byr.is_some()
+            && self.iyr.is_some()
+            && self.eyr.is_some()
+            && self.hgt.is_some()
+            && self.hcl.is_some()
+            && self.ecl.is_some()
+            && self.pid.is_some()
+    }
+
     fn set(&mut self, key: &str, value: &'a str) -> Result<(), Box<dyn Error>> {
         match key {
             "byr" => {
@@ -82,10 +156,22 @@ impl<'a> Passprt<'a> {
                 self.eyr_raw = Some(value);
                 self.eyr = parse_eyr(value);
             }
-            "hgt" => self.hgt_raw = Some(value),
-            "hcl" => self.hcl_raw = Some(value),
-            "ecl" => self.ecl_raw = Some(value),
-            "pid" => self.pid_raw = Some(value),
+            "hgt" => {
+                self.hgt_raw = Some(value);
+                self.hgt = parse_hgt(value);
+            }
+            "hcl" => {
+                self.hcl_raw = Some(value);
+                self.hcl = parse_hcl(value);
+            }
+            "ecl" => {
+                self.ecl_raw = Some(value);
+                self.ecl = parse_ecl(value);
+            }
+            "pid" => {
+                self.pid_raw = Some(value);
+                self.pid = parse_pid(value);
+            }
             "cid" => self.cid_raw = Some(value),
             _ => return Err(format!("Invalid field: {}:{}", key, value).into()),
         };
@@ -102,7 +188,9 @@ fn main() {
         .collect::<Result<Vec<_>, _>>()
         .expect("bad input");
     let valid = passport.iter().filter(|p| p.valid()).count();
+    let valid2 = passport.iter().filter(|p| p.valid_part2()).count();
     dbg!(valid);
+    dbg!(valid2);
 }
 
 #[cfg(test)]
@@ -129,5 +217,19 @@ mod test {
         let input = "byr:1828";
         let passport = Passprt::parse(&input).unwrap();
         assert_eq!(passport.byr, None);
+    }
+
+    #[test]
+    fn test_parse_hgt() {
+        let input = "hgt:190cm";
+        let passport = Passprt::parse(&input).unwrap();
+        assert_eq!(passport.hgt, Some(Hgt::Cm(190)));
+    }
+
+    #[test]
+    fn test_parse_hgt_invalid() {
+        let input = "hgt:195cm";
+        let passport = Passprt::parse(&input).unwrap();
+        assert_eq!(passport.hgt, None);
     }
 }
