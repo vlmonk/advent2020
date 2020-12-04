@@ -10,7 +10,14 @@ fn parse_byr(input: &str) -> Option<u32> {
 
 fn parse_iyr(input: &str) -> Option<u32> {
     match input.parse::<u32>() {
-        Ok(value) if value >= 1920 && value <= 2002 => Some(value),
+        Ok(value) if value >= 2010 && value <= 2020 => Some(value),
+        _ => None,
+    }
+}
+
+fn parse_eyr(input: &str) -> Option<u32> {
+    match input.parse::<u32>() {
+        Ok(value) if value >= 2020 && value <= 2030 => Some(value),
         _ => None,
     }
 }
@@ -22,6 +29,7 @@ struct Passprt<'a> {
     iyr_raw: Option<&'a str>,
     iyr: Option<u32>,
     eyr_raw: Option<&'a str>,
+    eyr: Option<u32>,
     hgt_raw: Option<&'a str>,
     hcl_raw: Option<&'a str>,
     ecl_raw: Option<&'a str>,
@@ -70,7 +78,10 @@ impl<'a> Passprt<'a> {
                 self.iyr_raw = Some(value);
                 self.iyr = parse_iyr(value);
             }
-            "eyr" => self.eyr_raw = Some(value),
+            "eyr" => {
+                self.eyr_raw = Some(value);
+                self.eyr = parse_eyr(value);
+            }
             "hgt" => self.hgt_raw = Some(value),
             "hcl" => self.hcl_raw = Some(value),
             "ecl" => self.ecl_raw = Some(value),
