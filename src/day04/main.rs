@@ -21,12 +21,12 @@ struct Passprt<'a> {
     byr: Option<u32>,
     iyr_raw: Option<&'a str>,
     iyr: Option<u32>,
-    eyr: Option<&'a str>,
-    hgt: Option<&'a str>,
-    hcl: Option<&'a str>,
-    ecl: Option<&'a str>,
-    pid: Option<&'a str>,
-    cid: Option<&'a str>,
+    eyr_raw: Option<&'a str>,
+    hgt_raw: Option<&'a str>,
+    hcl_raw: Option<&'a str>,
+    ecl_raw: Option<&'a str>,
+    pid_raw: Option<&'a str>,
+    cid_raw: Option<&'a str>,
 }
 
 impl<'a> Passprt<'a> {
@@ -53,11 +53,11 @@ impl<'a> Passprt<'a> {
     pub fn valid(&self) -> bool {
         self.byr_raw.is_some()
             && self.iyr_raw.is_some()
-            && self.eyr.is_some()
-            && self.hgt.is_some()
-            && self.hcl.is_some()
-            && self.ecl.is_some()
-            && self.pid.is_some()
+            && self.eyr_raw.is_some()
+            && self.hgt_raw.is_some()
+            && self.hcl_raw.is_some()
+            && self.ecl_raw.is_some()
+            && self.pid_raw.is_some()
     }
 
     fn set(&mut self, key: &str, value: &'a str) -> Result<(), Box<dyn Error>> {
@@ -70,12 +70,12 @@ impl<'a> Passprt<'a> {
                 self.iyr_raw = Some(value);
                 self.iyr = parse_iyr(value);
             }
-            "eyr" => self.eyr = Some(value),
-            "hgt" => self.hgt = Some(value),
-            "hcl" => self.hcl = Some(value),
-            "ecl" => self.ecl = Some(value),
-            "pid" => self.pid = Some(value),
-            "cid" => self.cid = Some(value),
+            "eyr" => self.eyr_raw = Some(value),
+            "hgt" => self.hgt_raw = Some(value),
+            "hcl" => self.hcl_raw = Some(value),
+            "ecl" => self.ecl_raw = Some(value),
+            "pid" => self.pid_raw = Some(value),
+            "cid" => self.cid_raw = Some(value),
             _ => return Err(format!("Invalid field: {}:{}", key, value).into()),
         };
 
