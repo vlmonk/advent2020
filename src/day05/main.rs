@@ -79,6 +79,19 @@ where
     }
 }
 
+trait IntoPair<I, K> {
+    fn pair(self) -> PairIter<I, K>;
+}
+
+impl<I, K> IntoPair<I, K> for K
+where
+    K: Iterator<Item = I>,
+{
+    fn pair(self) -> PairIter<I, K> {
+        PairIter::new(self)
+    }
+}
+
 fn main() {
     let (result, elapsed) = measure(|| -> Result<(u32, u32), Box<dyn Error>> {
         let data = fs::read_to_string("data/day05.txt")?;
@@ -97,7 +110,9 @@ fn main() {
             .map(|v| *v)
             .ok_or_else(|| "Task A: not found")?;
 
-        let task_b = PairIter::new(numbers.iter())
+        let task_b = numbers
+            .iter()
+            .pair()
             .find_map(|(a, b)| if *b == *a + 1 { None } else { Some(a + 1) })
             .ok_or_else(|| "Task B: not found")?;
 
