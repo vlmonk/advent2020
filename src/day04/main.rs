@@ -47,36 +47,8 @@ fn parse_hgt(input: &str) -> Option<Hgt> {
     }
 }
 
-fn parse_hcl(input: &str) -> Option<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"#[0-9a-f]{6}").unwrap();
-    }
-
-    if RE.is_match(input) {
-        Some(input)
-    } else {
-        None
-    }
-}
-
-fn parse_ecl(input: &str) -> Option<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^(amb|blu|brn|gry|grn|hzl|oth)$").unwrap();
-    }
-
-    if RE.is_match(input) {
-        Some(input)
-    } else {
-        None
-    }
-}
-
-fn parse_pid(input: &str) -> Option<&str> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"^[0-9]{9}$").unwrap();
-    }
-
-    if RE.is_match(input) {
+fn parse_re<'a>(input: &'a str, re: &Regex) -> Option<&'a str> {
+    if re.is_match(input) {
         Some(input)
     } else {
         None
@@ -144,6 +116,12 @@ impl<'a> Passprt<'a> {
     }
 
     fn set(&mut self, key: &str, value: &'a str) -> Result<(), Box<dyn Error>> {
+        lazy_static! {
+            static ref RE_HCL: Regex = Regex::new(r"#[0-9a-f]{6}").unwrap();
+            static ref RE_ECL: Regex = Regex::new(r"^(amb|blu|brn|gry|grn|hzl|oth)$").unwrap();
+            static ref RE_PID: Regex = Regex::new(r"^[0-9]{9}$").unwrap();
+        }
+
         match key {
             "byr" => {
                 self.byr_raw = Some(value);
@@ -163,15 +141,15 @@ impl<'a> Passprt<'a> {
             }
             "hcl" => {
                 self.hcl_raw = Some(value);
-                self.hcl = parse_hcl(value);
+                self.hcl = parse_re(value, &RE_HCL);
             }
             "ecl" => {
                 self.ecl_raw = Some(value);
-                self.ecl = parse_ecl(value);
+                self.ecl = parse_re(value, &RE_ECL);
             }
             "pid" => {
                 self.pid_raw = Some(value);
-                self.pid = parse_pid(value);
+                self.pid = parse_re(value, &RE_PID);
             }
             "cid" => self.cid_raw = Some(value),
             _ => return Err(format!("Invalid field: {}:{}", key, value).into()),
