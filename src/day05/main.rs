@@ -1,4 +1,5 @@
 use advent2020::measure;
+use std::error::Error;
 use std::fs;
 
 fn binary(input: &str, one: char, zero: char) -> Option<u32> {
@@ -79,35 +80,34 @@ where
 }
 
 fn main() {
-    let ((task_a, task_b), elapsed) =
-        measure(|| {
-            let data = fs::read_to_string("data/day05.txt").unwrap();
-            let board_passes = data
-                .lines()
-                .map(BoardPass::parse)
-                .collect::<Option<Vec<_>>>()
-                .expect("bad input");
+    let (result, elapsed) = measure(|| -> Result<(u32, u32), Box<dyn Error>> {
+        let data = fs::read_to_string("data/day05.txt")?;
+        let board_passes = data
+            .lines()
+            .map(BoardPass::parse)
+            .collect::<Option<Vec<_>>>()
+            .ok_or_else(|| "Can\'t parse result")?;
 
-            let mut numbers: Vec<_> = board_passes.iter().map(|pass| pass.seatid()).collect();
-            numbers.sort();
-            let task_a = numbers.iter().max().map(|v| *v);
-            let task_b = PairIter::new(numbers.iter()).find_map(|(a, b)| {
-                if *b == *a + 1 {
-                    None
-                } else {
-                    Some(a + 1)
-                }
-            });
+        let mut numbers: Vec<_> = board_passes.iter().map(|pass| pass.seatid()).collect();
+        numbers.sort();
 
-            (task_a, task_b)
-        });
+        let task_a = numbers
+            .iter()
+            .max()
+            .map(|v| *v)
+            .ok_or_else(|| "Task A: not found")?;
 
-    println!(
-        "task A: {}\ntask B: {}\nTotal time: {}μs ",
-        task_a.unwrap_or(0),
-        task_b.unwrap_or(0),
-        elapsed
-    );
+        let task_b = PairIter::new(numbers.iter())
+            .find_map(|(a, b)| if *b == *a + 1 { None } else { Some(a + 1) })
+            .ok_or_else(|| "Task B: not found")?;
+
+        Ok((task_a, task_b))
+    });
+
+    match result {
+        Ok((a, b)) => println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed),
+        Err(e) => println!("Error: {}", e),
+    };
 }
 
 #[cfg(test)]
