@@ -1,3 +1,5 @@
+use std::fs;
+
 fn binary(input: &str, one: char, zero: char) -> Option<u32> {
     let size = input.len();
     let mut result: u32 = 0;
@@ -31,10 +33,73 @@ impl BoardPass {
 
         Some(Self::new(row, column))
     }
+
+    fn seatid(&self) -> u32 {
+        self.row * 8 + self.column
+    }
+}
+
+struct PairIter<I, K> {
+    inner: K,
+    last: Option<I>,
+}
+
+impl<I, K> PairIter<I, K>
+where
+    K: Iterator<Item = I>,
+{
+    pub fn new(inner: K) -> Self {
+        Self { inner, last: None }
+    }
+}
+
+impl<I, K> Iterator for PairIter<I, K>
+where
+    K: Iterator<Item = I>,
+    I: Copy,
+{
+    type Item = (I, I);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.last.take() {
+            Some(a) => {
+                let b = self.inner.next()?;
+                self.last = Some(b);
+                Some((a, b))
+            }
+            _ => {
+                let a = self.inner.next()?;
+                let b = self.inner.next()?;
+
+                self.last = Some(b);
+                Some((a, b))
+            }
+        }
+    }
 }
 
 fn main() {
-    println!("test me");
+    let data = fs::read_to_string("data/day05.txt").unwrap();
+    let board_passes = data
+        .lines()
+        .map(BoardPass::parse)
+        .collect::<Option<Vec<_>>>()
+        .expect("bad input");
+
+    let mut numbers: Vec<_> = board_passes.iter().map(|pass| pass.seatid()).collect();
+    numbers.sort();
+    let task_a = numbers.iter().max();
+    let task_b =
+        PairIter::new(numbers.iter()).find_map(
+            |(a, b)| {
+                if (*b == *a + 1) {
+                    None
+                } else {
+                    Some(a + 1)
+                }
+            },
+        );
+    dbg!(task_a);
+    dbg!(task_b);
 }
 
 #[cfg(test)]
