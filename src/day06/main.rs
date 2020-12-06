@@ -1,3 +1,4 @@
+use advent2020::measure;
 use std::collections::HashSet;
 use std::fs;
 
@@ -57,15 +58,16 @@ impl Group {
 }
 
 fn main() {
-    let data = fs::read_to_string("data/day06.txt").expect("File not found");
+    let ((a, b), elapsed) = measure(|| {
+        let data = fs::read_to_string("data/day06.txt").expect("File not found");
+        let groups = data.split("\n\n").map(Group::parse).collect::<Vec<_>>();
+        let task_a: usize = groups.iter().map(|g| g.any_answered()).sum();
+        let task_b: usize = groups.iter().map(|g| g.all_answered()).sum();
 
-    let groups = data.split("\n\n").map(Group::parse).collect::<Vec<_>>();
+        (task_a, task_b)
+    });
 
-    let task_a: usize = groups.iter().map(|g| g.any_answered()).sum();
-    let task_b: usize = groups.iter().map(|g| g.all_answered()).sum();
-
-    dbg!(task_a);
-    dbg!(task_b);
+    println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed);
 }
 
 #[cfg(test)]
