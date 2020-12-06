@@ -2,27 +2,27 @@ use std::collections::HashSet;
 use std::fs;
 
 struct Group {
-    answers: HashSet<char>,
+    group_answers: HashSet<char>,
 }
 
 impl Group {
     pub fn parse(input: &str) -> Self {
-        let mut answers = HashSet::new();
+        let mut group_answers = HashSet::new();
 
         for c in input.chars() {
             match c {
                 'a'..='z' => {
-                    answers.insert(c);
+                    group_answers.insert(c);
                 }
                 _ => {}
             }
         }
 
-        Self { answers }
+        Self { group_answers }
     }
 
     pub fn any_ansered(&self) -> usize {
-        self.answers.len()
+        self.group_answers.len()
     }
 }
 
