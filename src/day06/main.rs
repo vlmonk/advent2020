@@ -40,7 +40,7 @@ impl Group {
     }
 
     pub fn all_answered(&self) -> usize {
-        let total = self.any_answered();
+        let total = self.people.len();
 
         self.group_answers
             .iter()
@@ -66,4 +66,16 @@ fn main() {
 
     dbg!(task_a);
     dbg!(task_b);
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_answers() {
+        let group = Group::parse("abc");
+        assert_eq!(group.any_answered(), 3);
+        assert_eq!(group.all_answered(), 3);
+    }
 }
