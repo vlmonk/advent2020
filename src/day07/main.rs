@@ -2,30 +2,11 @@ use advent2020::measure;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-struct Bag(String);
+type RuleSet<'a> = HashMap<&'a str, HashSet<(&'a str, usize)>>;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-struct Inner(Bag, usize);
-
-type RuleSet = HashMap<Bag, HashSet<Inner>>;
-
-impl Bag {
-    fn new(input: &str) -> Self {
-        Self(input.into())
-    }
-}
-
-impl Inner {
-    fn new(bag: Bag, count: usize) -> Self {
-        Self(bag, count)
-    }
-}
-
-fn parse_line(input: &str) -> Option<(Bag, Vec<Inner>)> {
+fn parse_line(input: &str) -> Option<(&str, Vec<(&str, usize)>)> {
     let mut parts = input.split(" bags contain ");
-    let bag_part = parts.next()?;
-    let bag = Bag::new(bag_part);
+    let bag = parts.next()?;
 
     let inner_part = parts.next()?;
 
@@ -47,10 +28,10 @@ fn parse_line(input: &str) -> Option<(Bag, Vec<Inner>)> {
             let count: usize = trimmed[0..num_end].parse().ok()?;
             // dbg!(count);
 
-            let bag = Bag::new(&trimmed[num_end + 1..bag_start - 1]);
+            let bag = &trimmed[num_end + 1..bag_start - 1];
             // dbg!(&bag);
 
-            Some(Inner::new(bag, count))
+            Some((bag, count))
         })
         .collect::<Option<Vec<_>>>()?;
 
@@ -63,9 +44,6 @@ fn parse(input: &str) -> Option<RuleSet> {
     for line in input.lines() {
         // dbg!(&line);
         let (bag, inners) = parse_line(line)?;
-        // dbg!(&bag);
-        // dbg!(&inners);
-
         let mut rule = HashSet::new();
         for inner in inners.into_iter() {
             rule.insert(inner);
@@ -79,7 +57,7 @@ fn parse(input: &str) -> Option<RuleSet> {
 
 fn solve_a(rules: &RuleSet, target: &str) -> usize {
     let mut founed = HashSet::new();
-    founed.insert(Bag::new(target));
+    founed.insert(target);
 
     loop {
         let mut next = HashSet::new();
@@ -89,7 +67,7 @@ fn solve_a(rules: &RuleSet, target: &str) -> usize {
                     if &el.0 == target {
                         // dbg!(format!("{:?} -> {:?}", &rule, &el));
                         // dbg!(&founed);
-                        if !founed.contains(&rule) {
+                        if !founed.contains(rule) {
                             next.insert(rule.clone());
                         }
                     }
@@ -112,13 +90,15 @@ fn solve_a(rules: &RuleSet, target: &str) -> usize {
 }
 
 fn solve_b(rules: &RuleSet, target: &str) -> usize {
-    let target = Bag::new(target);
-    let mut cache: HashMap<Bag, usize> = HashMap::new();
-
+    let mut cache: HashMap<&str, usize> = HashMap::new();
     calculate_b(rules, &target, &mut cache) - 1
 }
 
-fn calculate_b(rules: &RuleSet, target: &Bag, cache: &mut HashMap<Bag, usize>) -> usize {
+fn calculate_b<'a, 'b>(
+    rules: &'a RuleSet,
+    target: &'a str,
+    cache: &'b mut HashMap<&'a str, usize>,
+) -> usize {
     if let Some(v) = cache.get(target) {
         // dbg!(format!("founc cached {} -> {}", target.0, v));
         return *v;
@@ -135,7 +115,7 @@ fn calculate_b(rules: &RuleSet, target: &Bag, cache: &mut HashMap<Bag, usize>) -
 
     // dbg!(format!("calculated {} -> {}", target.0, value));
 
-    cache.insert(target.clone(), value);
+    cache.insert(target, value);
 
     value
 }
@@ -172,18 +152,15 @@ mod test {
     #[test]
     fn test_parse_line() {
         let input = "light red bags contain 1 bright white bag, 2 muted yellow bags.";
-        let bug = Bag::new("light red");
-        let inner = vec![
-            Inner::new(Bag::new("bright white"), 1),
-            Inner::new(Bag::new("muted yellow"), 2),
-        ];
+        let bug = "light red";
+        let inner = vec![("bright white", 1), ("muted yellow", 2)];
         assert_eq!(parse_line(input).unwrap(), (bug, inner));
     }
 
     #[test]
     fn test_parse_empty() {
         let input = "faded blue bags contain no other bags.";
-        let bug = Bag::new("faded blue");
+        let bug = "faded blue";
         let inner = vec![];
         assert_eq!(parse_line(input).unwrap(), (bug, inner));
     }
