@@ -110,12 +110,44 @@ fn solve_a(rules: &RuleSet, target: &str) -> usize {
     return founed.len() - 1;
 }
 
+fn solve_b(rules: &RuleSet, target: &str) -> usize {
+    let target = Bag::new(target);
+    let mut cache: HashMap<Bag, usize> = HashMap::new();
+
+    calculate_b(rules, &target, &mut cache) - 1
+}
+
+fn calculate_b(rules: &RuleSet, target: &Bag, cache: &mut HashMap<Bag, usize>) -> usize {
+    if let Some(v) = cache.get(target) {
+        // dbg!(format!("founc cached {} -> {}", target.0, v));
+        return *v;
+    }
+
+    let rule = rules.get(target).unwrap();
+    // dbg!(&rule);
+
+    let value: usize = rule
+        .iter()
+        .map(|inner| calculate_b(rules, &inner.0, cache) * inner.1)
+        .sum::<usize>()
+        + 1;
+
+    // dbg!(format!("calculated {} -> {}", target.0, value));
+
+    cache.insert(target.clone(), value);
+
+    value
+}
+
 fn main() {
     let data = fs::read_to_string("data/day07.txt").unwrap();
     let rules = parse(&data).expect("cant parse input");
 
     let a = solve_a(&rules, "shiny gold");
     dbg!(a);
+
+    let b = solve_b(&rules, "shiny gold");
+    dbg!(b);
 }
 
 #[cfg(test)]
