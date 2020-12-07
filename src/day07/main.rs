@@ -1,3 +1,4 @@
+use advent2020::measure;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -140,14 +141,28 @@ fn calculate_b(rules: &RuleSet, target: &Bag, cache: &mut HashMap<Bag, usize>) -
 }
 
 fn main() {
-    let data = fs::read_to_string("data/day07.txt").unwrap();
-    let rules = parse(&data).expect("cant parse input");
+    let ((a, b), elapsed) = measure(|| {
+        let data = fs::read_to_string("data/day07.txt").unwrap();
+        let rules = parse(&data).expect("cant parse input");
 
-    let a = solve_a(&rules, "shiny gold");
-    dbg!(a);
+        //     let mut x: HashMap<&str, usize> = HashMap::new();
+        //     let sss = "foofoo";
+        //     let a = &sss[0..3];
+        //     let b = &sss[3..6];
 
-    let b = solve_b(&rules, "shiny gold");
-    dbg!(b);
+        //     dbg!(a);
+        //     dbg!(b);
+
+        //     x.insert(a, 100);
+        //     dbg!(x.get(b));
+
+        let a = solve_a(&rules, "shiny gold");
+        let b = solve_b(&rules, "shiny gold");
+
+        (a, b)
+    });
+
+    println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed);
 }
 
 #[cfg(test)]
@@ -171,6 +186,5 @@ mod test {
         let bug = Bag::new("faded blue");
         let inner = vec![];
         assert_eq!(parse_line(input).unwrap(), (bug, inner));
-        r
     }
 }
