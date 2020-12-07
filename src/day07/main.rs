@@ -68,7 +68,7 @@ fn solve_a(rules: &RuleSet, target: &str) -> usize {
                         // dbg!(format!("{:?} -> {:?}", &rule, &el));
                         // dbg!(&founed);
                         if !founed.contains(rule) {
-                            next.insert(rule.clone());
+                            next.insert(rule);
                         }
                     }
                 }
