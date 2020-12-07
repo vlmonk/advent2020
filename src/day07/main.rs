@@ -82,21 +82,24 @@ fn solve_a(rules: &RuleSet, target: &str) -> usize {
 
     loop {
         let mut next = HashSet::new();
-        for target in founed.iter() {
-            for (rule, inner) in rules.iter() {
-                if rule == target {
-                    for el in inner {
-                        if !founed.contains(&el.0) {
-                            next.insert(el.0.clone());
+        for (rule, inner) in rules.iter() {
+            for el in inner {
+                for target in founed.iter() {
+                    if &el.0 == target {
+                        // dbg!(format!("{:?} -> {:?}", &rule, &el));
+                        // dbg!(&founed);
+                        if !founed.contains(&rule) {
+                            next.insert(rule.clone());
                         }
                     }
                 }
             }
         }
 
-        dbg!(&next);
+        // dbg!(&next);
 
         if next.len() == 0 {
+            // dbg!(&next);
             break;
         }
 
