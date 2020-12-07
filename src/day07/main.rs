@@ -2,7 +2,8 @@ use advent2020::measure;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
-type RuleSet<'a> = HashMap<&'a str, HashSet<(&'a str, usize)>>;
+type ContainRules<'a> = HashMap<&'a str, HashSet<&'a str>>;
+type NumberRules<'a> = HashMap<&'a str, HashSet<(&'a str, usize)>>;
 
 fn parse_line(input: &str) -> Option<(&str, Vec<(&str, usize)>)> {
     let mut parts = input.split(" bags contain ");
@@ -18,18 +19,12 @@ fn parse_line(input: &str) -> Option<(&str, Vec<(&str, usize)>)> {
         .split(",")
         .map(|part| {
             let trimmed = part.trim();
-            // dbg!(trimmed);
 
             let num_end = trimmed.find(' ')?;
             let bag_start = trimmed.find("bag")?;
-            // dbg!(num_end);
-            // dbg!(bag_start);
 
             let count: usize = trimmed[0..num_end].parse().ok()?;
-            // dbg!(count);
-
             let bag = &trimmed[num_end + 1..bag_start - 1];
-            // dbg!(&bag);
 
             Some((bag, count))
         })
@@ -38,64 +33,77 @@ fn parse_line(input: &str) -> Option<(&str, Vec<(&str, usize)>)> {
     Some((bag, inner))
 }
 
-fn parse(input: &str) -> Option<RuleSet> {
-    let mut rules = HashMap::new();
+fn parse(input: &str) -> Option<(ContainRules, NumberRules)> {
+    let mut contain = HashMap::new();
+    let mut number = HashMap::new();
 
     for line in input.lines() {
-        // dbg!(&line);
         let (bag, inners) = parse_line(line)?;
-        let mut rule = HashSet::new();
+
+        let mut contain_rule = HashSet::new();
+        let mut number_rule = HashSet::new();
+
         for inner in inners.into_iter() {
-            rule.insert(inner);
+            contain_rule.insert(inner.0);
+            number_rule.insert(inner);
         }
 
-        rules.insert(bag, rule);
+        contain.insert(bag, contain_rule);
+        number.insert(bag, number_rule);
     }
 
-    Some(rules)
+    Some((contain, number))
 }
 
-fn solve_a(rules: &RuleSet, target: &str) -> usize {
-    let mut founed = HashSet::new();
-    founed.insert(target);
+fn solve_a(rules: &ContainRules, target: &str) -> usize {
+    let mut cache: HashMap<&str, bool> = HashMap::new();
 
-    loop {
-        let mut next = HashSet::new();
-        for (rule, inner) in rules.iter() {
-            for el in inner {
-                for target in founed.iter() {
-                    if &el.0 == target {
-                        // dbg!(format!("{:?} -> {:?}", &rule, &el));
-                        // dbg!(&founed);
-                        if !founed.contains(rule) {
-                            next.insert(rule);
-                        }
-                    }
-                }
-            }
-        }
+    rules
+        .keys()
+        .filter(|k| is_contain(k, target, rules, &mut cache))
+        .count()
+}
 
-        // dbg!(&next);
-
-        if next.len() == 0 {
-            // dbg!(&next);
-            break;
-        }
-
-        for i in next.drain() {
-            founed.insert(i);
-        }
+fn is_contain<'a, 'b>(
+    cargo: &'a str,
+    target: &'a str,
+    rules: &'a ContainRules,
+    cache: &'b mut HashMap<&'a str, bool>,
+) -> bool {
+    if let Some(v) = cache.get(cargo) {
+        return *v;
     }
-    return founed.len() - 1;
+
+    let rule = rules.get(cargo).unwrap();
+
+    if rule.len() == 0 {
+        cache.insert(cargo, false);
+        return false;
+    }
+
+    if rule.contains(target) {
+        cache.insert(cargo, true);
+        return true;
+    }
+
+    let result = rule
+        .iter()
+        .filter(|n| is_contain(n, target, rules, cache))
+        .count()
+        > 0;
+
+    cache.insert(cargo, result);
+
+    result
 }
 
-fn solve_b(rules: &RuleSet, target: &str) -> usize {
+fn solve_b(rules: &NumberRules, target: &str) -> usize {
     let mut cache: HashMap<&str, usize> = HashMap::new();
     calculate_b(rules, &target, &mut cache) - 1
 }
 
 fn calculate_b<'a, 'b>(
-    rules: &'a RuleSet,
+    rules: &'a NumberRules,
     target: &'a str,
     cache: &'b mut HashMap<&'a str, usize>,
 ) -> usize {
@@ -123,21 +131,10 @@ fn calculate_b<'a, 'b>(
 fn main() {
     let ((a, b), elapsed) = measure(|| {
         let data = fs::read_to_string("data/day07.txt").unwrap();
-        let rules = parse(&data).expect("cant parse input");
+        let (contain, numbers) = parse(&data).expect("cant parse input");
 
-        //     let mut x: HashMap<&str, usize> = HashMap::new();
-        //     let sss = "foofoo";
-        //     let a = &sss[0..3];
-        //     let b = &sss[3..6];
-
-        //     dbg!(a);
-        //     dbg!(b);
-
-        //     x.insert(a, 100);
-        //     dbg!(x.get(b));
-
-        let a = solve_a(&rules, "shiny gold");
-        let b = solve_b(&rules, "shiny gold");
+        let a = solve_a(&contain, "shiny gold");
+        let b = solve_b(&numbers, "shiny gold");
 
         (a, b)
     });
