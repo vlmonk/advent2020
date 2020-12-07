@@ -74,27 +74,28 @@ fn is_contain<'a, 'b>(
         return *v;
     }
 
-    let rule = rules.get(cargo).unwrap();
+    match rules.get(cargo) {
+        None => false,
+        Some(rule) if rule.len() == 0 => {
+            cache.insert(cargo, false);
+            false
+        }
+        Some(rule) if rule.contains(target) => {
+            cache.insert(cargo, true);
+            true
+        }
+        Some(rule) => {
+            let result = rule
+                .iter()
+                .filter(|n| is_contain(n, target, rules, cache))
+                .count()
+                > 0;
 
-    if rule.len() == 0 {
-        cache.insert(cargo, false);
-        return false;
+            cache.insert(cargo, result);
+
+            result
+        }
     }
-
-    if rule.contains(target) {
-        cache.insert(cargo, true);
-        return true;
-    }
-
-    let result = rule
-        .iter()
-        .filter(|n| is_contain(n, target, rules, cache))
-        .count()
-        > 0;
-
-    cache.insert(cargo, result);
-
-    result
 }
 
 fn solve_b(rules: &NumberRules, target: &str) -> usize {
