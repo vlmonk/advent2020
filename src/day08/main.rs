@@ -45,6 +45,11 @@ fn parse(input: &str) -> Result<Programm, Error> {
     input.lines().map(Insruction::try_from).collect()
 }
 
+enum StepResult {
+    Ok,
+    Stop,
+}
+
 struct CPU {
     prog: Programm,
     ip: usize,
@@ -68,45 +73,44 @@ impl CPU {
         self.acc
     }
 
-    pub fn step(&mut self) {
-        dbg!(&self.ip);
-        dbg!(&self.prog[self.ip]);
-        match self.prog[self.ip] {
-            Insruction::Noop(_) => {
+    pub fn step(&mut self) -> StepResult {
+        match self.prog.get(self.ip) {
+            Some(Insruction::Noop(_)) => {
                 self.ip += 1;
+                StepResult::Ok
             }
-            Insruction::Acc(v) => {
+            Some(Insruction::Acc(v)) => {
                 self.ip += 1;
                 self.acc += v;
+                StepResult::Ok
             }
-            Insruction::Jmp(v) => {
+            Some(Insruction::Jmp(v)) => {
                 let next = self.ip as i32 + v;
                 self.ip = next as usize;
+                StepResult::Ok
             }
+            None => StepResult::Stop,
         }
     }
 }
 
-struct Solver {
-    cpu: CPU,
-}
+struct Solver {}
 
 impl Solver {
-    pub fn new(prog: Programm) -> Self {
-        Self {
-            cpu: CPU::new(prog),
-        }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub fn solve(&mut self) -> i32 {
+    pub fn solve(&self, prog: Programm) -> i32 {
+        let mut cpu = CPU::new(prog);
         let mut visited: HashSet<usize> = HashSet::new();
 
         loop {
-            self.cpu.step();
-            let ip = self.cpu.ip();
+            cpu.step();
+            let ip = cpu.ip();
 
             if visited.contains(&ip) {
-                return self.cpu.acc();
+                return cpu.acc();
             }
 
             visited.insert(ip);
@@ -117,7 +121,8 @@ impl Solver {
 fn main() {
     let data = std::fs::read_to_string("data/day08.txt").unwrap();
     let programm = parse(&data).unwrap();
-    let value = Solver::new(programm).solve();
+    let value = Solver::new().solve(programm);
+
     dbg!(value);
 }
 
