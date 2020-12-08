@@ -124,14 +124,12 @@ fn main() {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::convert::TryInto;
 
     #[test]
     fn test_parse_ok() {
-        assert_eq!(Insruction::try_from("nop +0").unwrap(), Insruction::Noop(0));
-        assert_eq!(Insruction::try_from("acc +1").unwrap(), Insruction::Acc(1));
-        assert_eq!(
-            Insruction::try_from("jmp -100").unwrap(),
-            Insruction::Jmp(-100)
-        );
+        assert_eq!("nop +0".try_into(), Ok(Insruction::Noop(0)));
+        assert_eq!("acc +1".try_into(), Ok(Insruction::Acc(1)));
+        assert_eq!(("jmp -100").try_into(), Ok(Insruction::Jmp(-100)));
     }
 }
