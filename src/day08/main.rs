@@ -1,11 +1,13 @@
+use advent2020::measure;
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashSet;
 use std::convert::TryFrom;
+use std::mem;
 
 type Error = Box<dyn std::error::Error>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Insruction {
     Noop(i32),
     Acc(i32),
@@ -45,19 +47,20 @@ fn parse(input: &str) -> Result<Programm, Error> {
     input.lines().map(Insruction::try_from).collect()
 }
 
+#[derive(PartialEq)]
 enum StepResult {
     Ok,
     Stop,
 }
 
-struct CPU {
-    prog: Programm,
+struct CPU<'a> {
+    prog: &'a Programm,
     ip: usize,
     acc: i32,
 }
 
-impl CPU {
-    pub fn new(prog: Programm) -> Self {
+impl<'a> CPU<'a> {
+    pub fn new(prog: &'a Programm) -> Self {
         Self {
             prog,
             ip: 0,
@@ -94,6 +97,53 @@ impl CPU {
     }
 }
 
+struct ProgMutator {
+    prog: Programm,
+    next: usize,
+}
+
+impl Iterator for ProgMutator {
+    type Item = Programm;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.prog.get(self.next) {
+                Some(Insruction::Noop(v)) => {
+                    let mut clone = self.prog.clone();
+                    let mut replace = Insruction::Jmp(*v);
+                    mem::swap(&mut clone[self.next], &mut replace);
+                    self.next += 1;
+
+                    return Some(clone);
+                }
+                Some(Insruction::Jmp(v)) => {
+                    let mut clone = self.prog.clone();
+                    let mut replace = Insruction::Noop(*v);
+                    mem::swap(&mut clone[self.next], &mut replace);
+                    self.next += 1;
+
+                    return Some(clone);
+                }
+                Some(_) => {}
+                _ => return None,
+            }
+
+            self.next += 1;
+        }
+    }
+}
+
+impl ProgMutator {
+    pub fn new(prog: Programm) -> Self {
+        Self { prog, next: 0 }
+    }
+}
+
+enum RunResult {
+    Loop,
+    Stop,
+}
+
 struct Solver {}
 
 impl Solver {
@@ -101,29 +151,64 @@ impl Solver {
         Self {}
     }
 
-    pub fn solve(&self, prog: Programm) -> i32 {
-        let mut cpu = CPU::new(prog);
-        let mut visited: HashSet<usize> = HashSet::new();
+    pub fn solve(&self, prog: Programm) -> Option<i32> {
+        let mut cpu = CPU::new(&prog);
+        match self.run_till_stop(&mut cpu) {
+            RunResult::Loop => Some(cpu.acc()),
+            _ => None,
+        }
+    }
+
+    pub fn solve_b(&self, prog: Programm) -> Option<i32> {
+        ProgMutator::new(prog).find_map(|prog| {
+            let mut cpu = CPU::new(&prog);
+            let result = self.run_till_stop(&mut cpu);
+            match result {
+                RunResult::Stop => Some(cpu.acc()),
+                _ => None,
+            }
+        })
+    }
+
+    fn run_till_stop(&self, cpu: &mut CPU) -> RunResult {
+        let mut visited = HashSet::new();
 
         loop {
-            cpu.step();
-            let ip = cpu.ip();
-
-            if visited.contains(&ip) {
-                return cpu.acc();
+            let step_result = cpu.step();
+            if step_result == StepResult::Stop {
+                return RunResult::Stop;
             }
 
-            visited.insert(ip);
+            if visited.contains(&cpu.ip()) {
+                return RunResult::Loop;
+            }
+
+            visited.insert(cpu.ip());
         }
     }
 }
 
 fn main() {
-    let data = std::fs::read_to_string("data/day08.txt").unwrap();
-    let programm = parse(&data).unwrap();
-    let value = Solver::new().solve(programm);
+    let ((a, b), elapsed) = measure(|| {
+        let data = std::fs::read_to_string("data/day08.txt").unwrap();
+        let programm = parse(&data).unwrap();
 
-    dbg!(value);
+        (
+            Solver::new().solve(programm.clone()),
+            Solver::new().solve_b(programm),
+        )
+    });
+
+    match a {
+        Some(value) => println!("Task A: {}", value),
+        _ => println!("Task A: not found"),
+    };
+
+    match b {
+        Some(value) => println!("Task B: {}", value),
+        _ => println!("Task B: not found"),
+    };
+    println!("Total time: {}μs", elapsed);
 }
 
 #[cfg(test)]
