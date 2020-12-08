@@ -7,7 +7,7 @@ type Error = Box<dyn std::error::Error>;
 
 #[derive(Debug, PartialEq)]
 enum Insruction {
-    Noop,
+    Noop(i32),
     Acc(i32),
     Jmp(i32),
 }
@@ -31,7 +31,7 @@ impl TryFrom<&str> for Insruction {
             .ok_or_else(err)?;
 
         match (op, value) {
-            ("nop", _) => Ok(Insruction::Noop),
+            ("nop", v) => Ok(Insruction::Noop(v)),
             ("acc", v) => Ok(Insruction::Acc(v)),
             ("jmp", v) => Ok(Insruction::Jmp(v)),
             (_, _) => Err(err().into()),
@@ -72,7 +72,7 @@ impl CPU {
         dbg!(&self.ip);
         dbg!(&self.prog[self.ip]);
         match self.prog[self.ip] {
-            Insruction::Noop => {
+            Insruction::Noop(_) => {
                 self.ip += 1;
             }
             Insruction::Acc(v) => {
@@ -127,10 +127,10 @@ mod test {
 
     #[test]
     fn test_parse_ok() {
-        assert_eq!(Insruction::try_from("nop +0").unwrap(), Insruction::Noop);
+        assert_eq!(Insruction::try_from("nop +0").unwrap(), Insruction::Noop(0));
         assert_eq!(Insruction::try_from("acc +1").unwrap(), Insruction::Acc(1));
         assert_eq!(
-            Insruction::try_from("jpp -100").unwrap(),
+            Insruction::try_from("jmp -100").unwrap(),
             Insruction::Jmp(-100)
         );
     }
