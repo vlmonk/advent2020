@@ -218,8 +218,8 @@ mod test {
 
     #[test]
     fn test_parse_ok() {
-        assert_eq!("nop +0".try_into(), Ok(Insruction::Noop(0)));
-        assert_eq!("acc +1".try_into(), Ok(Insruction::Acc(1)));
-        assert_eq!(("jmp -100").try_into(), Ok(Insruction::Jmp(-100)));
+        assert_eq!(Insruction::Noop(1), "nop +1".try_into().unwrap());
+        assert_eq!(Insruction::Acc(1), "acc +1".try_into().unwrap());
+        assert_eq!(Insruction::Jmp(-100), "jmp -100".try_into().unwrap());
     }
 }
