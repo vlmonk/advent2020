@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::fs;
+use std::iter::FromIterator;
 
 const PREAMBULE: usize = 25;
 
@@ -32,6 +33,45 @@ impl<T> FixedVec<T> {
     }
 }
 
+fn solve_a(input: &[i64]) -> Option<i64> {
+    let mut queue = FixedVec::new(PREAMBULE);
+    input[0..PREAMBULE].iter().for_each(|&i| queue.add(i));
+
+    input[PREAMBULE..]
+        .iter()
+        .find(|&&i| {
+            let matched = queue.pair_iter().find(|(&a, &b)| a + b == i);
+            if let None = matched {
+                return true;
+            } else {
+                queue.add(i);
+                return false;
+            }
+        })
+        .map(|&v| v)
+}
+
+fn solve_b(input: &[i64], target: i64) -> Option<i64> {
+    println!("target: {}", target);
+    let (a, b) = (0..input.len()).find_map(|a| {
+        input[a..]
+            .iter()
+            .enumerate()
+            .scan(0, |state, (index, el)| {
+                *state += el;
+                Some((index, *state))
+            })
+            .take_while(|(_, total)| *total <= target)
+            .find(|(_, total)| *total == target)
+            .map(|(index, _)| (a, a + index))
+    })?;
+
+    let mut clone = Vec::from_iter(input[a..=b].iter().map(|v| *v));
+    clone.sort();
+
+    Some(clone[0] + clone[clone.len() - 1])
+}
+
 fn main() {
     let data = fs::read_to_string("data/day09.txt").unwrap();
     let input = data
@@ -40,21 +80,11 @@ fn main() {
         .collect::<Option<Vec<_>>>()
         .unwrap();
 
-    let mut queue = FixedVec::new(PREAMBULE);
-    input[0..PREAMBULE].iter().for_each(|&i| queue.add(i));
-    let founed = input[PREAMBULE..].iter().find(|&&i| {
-        println!("Test number {}", i);
-        let matched = queue.pair_iter().find(|(&a, &b)| a + b == i);
-        if let None = matched {
-            return true;
-        } else {
-            queue.add(i);
-            return false;
-        }
-    });
-    dbg!(founed);
+    let value_a = solve_a(&input).unwrap();
+    // let value_b = solve_b(&input, value_a).unwrap();
+    let value_b = solve_b(&input, value_a).unwrap();
 
-    println!("Main");
+    println!("Task A: {}\nTask B: {}", value_a, value_b);
 }
 
 #[cfg(test)]
