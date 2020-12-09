@@ -1,4 +1,7 @@
 use std::collections::VecDeque;
+use std::fs;
+
+const PREAMBULE: usize = 25;
 
 struct FixedVec<T> {
     size: usize,
@@ -30,6 +33,27 @@ impl<T> FixedVec<T> {
 }
 
 fn main() {
+    let data = fs::read_to_string("data/day09.txt").unwrap();
+    let input = data
+        .lines()
+        .map(|l| l.parse::<i64>().ok())
+        .collect::<Option<Vec<_>>>()
+        .unwrap();
+
+    let mut queue = FixedVec::new(PREAMBULE);
+    input[0..PREAMBULE].iter().for_each(|&i| queue.add(i));
+    let founed = input[PREAMBULE..].iter().find(|&&i| {
+        println!("Test number {}", i);
+        let matched = queue.pair_iter().find(|(&a, &b)| a + b == i);
+        if let None = matched {
+            return true;
+        } else {
+            queue.add(i);
+            return false;
+        }
+    });
+    dbg!(founed);
+
     println!("Main");
 }
 
