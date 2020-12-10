@@ -1,3 +1,4 @@
+use advent2020::measure;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
@@ -85,13 +86,20 @@ fn permutate_rec(
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let input = read_input()?;
+    let (result, elapsed) = measure(|| -> Result<(isize, isize), Box<dyn Error>> {
+        let input = read_input()?;
+        let task_a = solve_a(&input)?;
+        let task_b = solve_b(&input)?;
 
-    let task_a = solve_a(&input)?;
-    dbg!(task_a);
+        Ok((task_a, task_b))
+    });
 
-    let task_b = solve_b(&input)?;
-    dbg!(task_b);
+    match result {
+        Ok((a, b)) => {
+            println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed);
+        }
+        _ => {}
+    }
 
     Ok(())
 }
