@@ -31,6 +31,17 @@ enum Direction {
     West,
 }
 
+impl Direction {
+    fn turn(self) -> Self {
+        match self {
+            Self::North => Self::East,
+            Self::East => Self::South,
+            Self::South => Self::West,
+            Self::West => Self::North,
+        }
+    }
+}
+
 #[derive(Debug)]
 enum Action {
     Move(Direction, isize),
@@ -87,21 +98,11 @@ impl World {
     }
 
     fn turn(&mut self, angle: isize) {
-        let before = match self.dir {
-            Direction::North => 0,
-            Direction::East => 1,
-            Direction::South => 2,
-            Direction::West => 3,
-        };
+        let angle = ((angle / 90) % 4 + 4) % 4;
 
-        let angle = (angle / 90) % 4;
-        let next_angel = ((((before + angle) % 4) + 4) % 4) as usize;
-        self.dir = [
-            Direction::North,
-            Direction::East,
-            Direction::South,
-            Direction::West,
-        ][next_angel];
+        for _ in 0..angle {
+            self.dir = self.dir.turn()
+        }
     }
 }
 
