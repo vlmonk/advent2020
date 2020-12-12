@@ -21,6 +21,26 @@ impl Point {
             Direction::West => self.x -= amount,
         };
     }
+
+    fn step_by(&mut self, next: &Self) {
+        self.x += next.x;
+        self.y += next.y;
+    }
+
+    fn times(&self, amount: isize) -> Self {
+        Self {
+            x: self.x * amount,
+            y: self.y * amount,
+        }
+    }
+
+    fn turn(&mut self) {
+        let x = self.y * -1;
+        let y = self.x;
+
+        self.x = x;
+        self.y = y;
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -73,6 +93,7 @@ impl TryFrom<&str> for Action {
 #[derive(Debug)]
 struct World {
     ship: Point,
+    waypoint: Point,
     dir: Direction,
 }
 
@@ -80,6 +101,7 @@ impl World {
     fn new() -> Self {
         Self {
             ship: Point::new(0, 0),
+            waypoint: Point::new(10, -1),
             dir: Direction::East,
         }
     }
@@ -97,11 +119,28 @@ impl World {
         }
     }
 
+    fn step_relative(&mut self, action: &Action) {
+        match action {
+            Action::Move(dir, amount) => self.waypoint.step(dir, *amount),
+            Action::Forward(value) => self.ship.step_by(&self.waypoint.times(*value)),
+            Action::Left(value) => self.turn_waypoint(*value * -1),
+            Action::Right(value) => self.turn_waypoint(*value),
+        }
+    }
+
     fn turn(&mut self, angle: isize) {
         let angle = ((angle / 90) % 4 + 4) % 4;
 
         for _ in 0..angle {
             self.dir = self.dir.turn()
+        }
+    }
+
+    fn turn_waypoint(&mut self, angle: isize) {
+        let angle = ((angle / 90) % 4 + 4) % 4;
+
+        for _ in 0..angle {
+            self.waypoint.turn()
         }
     }
 }
@@ -120,6 +159,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("Task A: {}", world.distance_from_start());
+
+    let mut world = World::new();
+    for action in input.iter() {
+        world.step_relative(action);
+    }
+
+    println!("Task B: {}", world.distance_from_start());
 
     Ok(())
 }
