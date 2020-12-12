@@ -2,6 +2,27 @@ use std::convert::TryFrom;
 use std::error::Error;
 use std::fs;
 
+#[derive(Debug)]
+struct Point {
+    x: isize,
+    y: isize,
+}
+
+impl Point {
+    fn new(x: isize, y: isize) -> Self {
+        Self { x, y }
+    }
+
+    fn step(&mut self, dir: &Direction, amount: isize) {
+        match dir {
+            Direction::North => self.y -= amount,
+            Direction::East => self.x += amount,
+            Direction::South => self.y += amount,
+            Direction::West => self.x -= amount,
+        };
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum Direction {
     North,
@@ -12,10 +33,7 @@ enum Direction {
 
 #[derive(Debug)]
 enum Action {
-    North(isize),
-    South(isize),
-    East(isize),
-    West(isize),
+    Move(Direction, isize),
     Left(isize),
     Right(isize),
     Forward(isize),
@@ -29,10 +47,10 @@ impl TryFrom<&str> for Action {
         let value = input[1..].parse::<isize>()?;
 
         match action {
-            'N' => Ok(Action::North(value)),
-            'S' => Ok(Action::South(value)),
-            'E' => Ok(Action::East(value)),
-            'W' => Ok(Action::West(value)),
+            'N' => Ok(Action::Move(Direction::North, value)),
+            'S' => Ok(Action::Move(Direction::South, value)),
+            'E' => Ok(Action::Move(Direction::East, value)),
+            'W' => Ok(Action::Move(Direction::West, value)),
             'L' => Ok(Action::Left(value)),
             'R' => Ok(Action::Right(value)),
             'F' => Ok(Action::Forward(value)),
@@ -43,44 +61,29 @@ impl TryFrom<&str> for Action {
 
 #[derive(Debug)]
 struct World {
-    x: isize,
-    y: isize,
+    ship: Point,
     dir: Direction,
 }
 
 impl World {
     fn new() -> Self {
         Self {
-            x: 0,
-            y: 0,
+            ship: Point::new(0, 0),
             dir: Direction::East,
         }
     }
 
-    fn step(&mut self, action: &Action) {
-        // let foo: [i8; 4] = [0, 1, 2, 3];
-        // let bar = foo[8];
+    fn distance_from_start(&self) -> isize {
+        self.ship.x.abs() + self.ship.y.abs()
+    }
 
+    fn step(&mut self, action: &Action) {
         match action {
-            Action::North(value) => self.y -= value,
-            Action::South(value) => self.y += value,
-            Action::East(value) => self.x += value,
-            Action::West(value) => self.x -= value,
-            Action::Forward(value) => self.step_forward(*value),
+            Action::Move(dir, amount) => self.ship.step(dir, *amount),
+            Action::Forward(value) => self.ship.step(&self.dir, *value),
             Action::Left(value) => self.turn(*value * -1),
             Action::Right(value) => self.turn(*value),
         }
-    }
-
-    fn step_forward(&mut self, value: isize) {
-        let next_action = match self.dir {
-            Direction::North => Action::North(value),
-            Direction::East => Action::East(value),
-            Direction::South => Action::South(value),
-            Direction::West => Action::West(value),
-        };
-
-        self.step(&next_action);
     }
 
     fn turn(&mut self, angle: isize) {
@@ -114,6 +117,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     for action in input.iter() {
         world.step(action);
     }
+
+    println!("Task A: {}", world.distance_from_start());
 
     Ok(())
 }
