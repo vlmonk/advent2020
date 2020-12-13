@@ -65,8 +65,8 @@ mod solver {
             })
     }
 
-    pub fn solve_b(input: &crate::Input) -> Option<i128> {
-        let mut target = input
+    pub fn solve_b(input: &crate::Input) -> Option<usize> {
+        let target = input
             .buses
             .iter()
             .enumerate()
@@ -79,37 +79,28 @@ mod solver {
             })
             .collect::<Vec<_>>();
 
-        target.sort_by_key(|(_, bus_n)| *bus_n);
-        target.reverse();
+        let (mut start, mut step) = target.get(0)?;
 
-        dbg!(&target);
-
-        // let mut i: i128 = 100000000000000;
-        let mut i: i128 = 0;
-        let step = target.get(0).map(|(_, bus_n)| *bus_n)?;
-
-        loop {
-            let founded = target
-                .iter()
-                .filter_map(|(index, bus_n)| {
-                    let rem = (i + *index as i128) % (*bus_n as i128);
-                    if rem == 0 {
-                        None
-                    } else {
-                        Some(*bus_n as i128 - rem)
-                    }
-                })
-                .max();
-
-            if let Some(n) = founded {
-                println!("{} -> {} ({})", i, i + n, n);
-                i += n;
-            } else {
-                return Some(i);
-            }
+        for i in target[1..].iter() {
+            let foo = solve_b_pair(start, step, *i);
+            start = foo.0;
+            step = foo.1;
         }
 
-        // (0..).find(|n| target.iter().all(|(index, bus_n)| (n + index) % bus_n == 0))
+        Some(start)
+    }
+
+    fn solve_b_pair(start: usize, step: usize, next: (usize, usize)) -> (usize, usize) {
+        let (a, b) = next;
+        let mut i = start;
+
+        loop {
+            if (i + a) % b == 0 {
+                return (i, step * b);
+            }
+
+            i += step;
+        }
     }
 }
 
