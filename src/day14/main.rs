@@ -104,6 +104,50 @@ impl Solver {
     }
 }
 
+struct FloatIterator {
+    positions: Vec<u8>,
+    current: usize,
+    max: usize,
+}
+
+impl Iterator for FloatIterator {
+    type Item = u64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current > self.max {
+            return None;
+        }
+
+        let mut item = 0;
+
+        for i in 0..self.positions.len() {
+            if (self.current >> i) & 1 == 1 {
+                item |= 1 << self.positions[i]
+            }
+        }
+        self.current += 1;
+
+        Some(item)
+    }
+}
+
+impl FloatIterator {
+    pub fn new(digits: u64) -> Self {
+        let positions: Vec<u8> = (0..36)
+            .into_iter()
+            .filter(|p| (digits >> p) & 1 == 1)
+            .collect();
+
+        let max = (2 as usize).pow(positions.len() as u32) - 1;
+
+        Self {
+            positions,
+            max,
+            current: 0,
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let raw = fs::read_to_string("data/day14.txt")?;
     let code = parse_code(&raw)?;
@@ -111,7 +155,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut solver = Solver::new();
     solver.run(&code);
     let task_a = solver.sum();
-    dbg!(task_a);
 
     Ok(())
 }
@@ -136,6 +179,16 @@ mod test {
         assert_eq!(
             Command::try_from("mem[8] = 11").unwrap(),
             Command::SetMem { addr: 8, value: 11 }
+        );
+    }
+
+    #[test]
+    fn test_float_iter() {
+        assert_eq!(vec![0, 1], FloatIterator::new(0b1).collect::<Vec<_>>());
+        assert_eq!(vec![0, 2], FloatIterator::new(0b10).collect::<Vec<_>>());
+        assert_eq!(
+            vec![0, 2, 8, 10],
+            FloatIterator::new(0b1010).collect::<Vec<_>>()
         );
     }
 }
