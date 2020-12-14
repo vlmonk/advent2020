@@ -32,6 +32,17 @@ fn parse_mask(input: &str) -> Result<(u64, u64), Box<dyn Error>> {
     Ok((and, or))
 }
 
+fn parse_mem(input: &str) -> Result<(usize, u64), Box<dyn Error>> {
+    let i_start = input.find('[').ok_or("invalid input")?;
+    let i_end = input.find(']').ok_or("invalid input")?;
+    let eq = input.find('=').ok_or("invalid input")?;
+
+    let addr = input[i_start + 1..i_end].parse::<usize>()?;
+    let value = input[eq + 2..].parse::<u64>()?;
+
+    Ok((addr, value))
+}
+
 impl TryFrom<&str> for Command {
     type Error = Box<dyn Error>;
 
@@ -39,6 +50,9 @@ impl TryFrom<&str> for Command {
         if &input[0..7] == "mask = " {
             let (and, or) = parse_mask(&input[7..])?;
             Ok(Command::SetMask { and, or })
+        } else if &input[0..3] == "mem" {
+            let (addr, value) = parse_mem(&input)?;
+            Ok(Command::SetMem { addr, value })
         } else {
             Err("Invalid command".into())
         }
