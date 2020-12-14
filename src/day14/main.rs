@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::error::Error;
+use std::fs;
 
 #[derive(Debug, PartialEq)]
 enum Command {
@@ -59,8 +61,59 @@ impl TryFrom<&str> for Command {
     }
 }
 
-fn main() {
-    println!("Placeholder!");
+fn parse_code(input: &str) -> Result<Vec<Command>, Box<dyn Error>> {
+    input.lines().map(Command::try_from).collect()
+}
+
+struct Solver {
+    and_mask: u64,
+    or_mask: u64,
+    memory: HashMap<usize, u64>,
+}
+
+impl Solver {
+    pub fn new() -> Self {
+        Self {
+            and_mask: 0,
+            or_mask: 0,
+            memory: HashMap::new(),
+        }
+    }
+
+    pub fn run(&mut self, code: &[Command]) {
+        for cmd in code.iter() {
+            self.run_command(cmd);
+        }
+    }
+
+    pub fn sum(&self) -> u64 {
+        self.memory.values().sum()
+    }
+
+    fn run_command(&mut self, command: &Command) {
+        match command {
+            Command::SetMask { and, or } => {
+                self.or_mask = *or;
+                self.and_mask = *and;
+            }
+            Command::SetMem { addr, value } => {
+                let value = value & self.and_mask | self.or_mask;
+                self.memory.insert(*addr, value);
+            }
+        }
+    }
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let raw = fs::read_to_string("data/day14.txt")?;
+    let code = parse_code(&raw)?;
+
+    let mut solver = Solver::new();
+    solver.run(&code);
+    let task_a = solver.sum();
+    dbg!(task_a);
+
+    Ok(())
 }
 
 #[cfg(test)]
