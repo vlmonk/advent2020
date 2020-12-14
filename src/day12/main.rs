@@ -35,7 +35,7 @@ impl Point {
     }
 
     fn turn(&mut self) {
-        let x = self.y * -1;
+        let x = -self.y;
         let y = self.x;
 
         self.x = x;

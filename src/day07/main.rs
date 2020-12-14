@@ -16,7 +16,7 @@ fn parse_line(input: &str) -> Option<(&str, Vec<(&str, usize)>)> {
     }
 
     let inner = inner_part
-        .split(",")
+        .split(',')
         .map(|part| {
             let trimmed = part.trim();
 
@@ -76,7 +76,7 @@ fn is_contain<'a, 'b>(
 
     match rules.get(cargo) {
         None => false,
-        Some(rule) if rule.len() == 0 => {
+        Some(rule) if rule.is_empty() => {
             cache.insert(cargo, false);
             false
         }

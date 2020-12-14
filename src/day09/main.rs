@@ -41,14 +41,14 @@ fn solve_a(input: &[i64]) -> Option<i64> {
         .iter()
         .find(|&&i| {
             let matched = queue.pair_iter().find(|(&a, &b)| a + b == i);
-            if let None = matched {
-                return true;
+            if matched.is_none() {
+                true
             } else {
                 queue.add(i);
-                return false;
+                false
             }
         })
-        .map(|&v| v)
+        .copied()
 }
 
 fn solve_b(input: &[i64], target: i64) -> Option<i64> {
@@ -66,8 +66,8 @@ fn solve_b(input: &[i64], target: i64) -> Option<i64> {
             .map(|(index, _)| (a, a + index))
     })?;
 
-    let mut clone = Vec::from_iter(input[a..=b].iter().map(|v| *v));
-    clone.sort();
+    let mut clone = Vec::from_iter(input[a..=b].iter().copied());
+    clone.sort_unstable();
 
     Some(clone[0] + clone[clone.len() - 1])
 }

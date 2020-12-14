@@ -9,14 +9,14 @@ fn read_input() -> Result<Vec<isize>, Box<dyn Error>> {
         .lines()
         .map(|line| line.parse::<isize>())
         .collect::<Result<Vec<_>, _>>()?;
-    result.sort();
+    result.sort_unstable();
     Ok(result)
 }
 
 fn solve_a(input: &[isize]) -> Result<isize, Box<dyn Error>> {
-    let max = *input.last().ok_or_else(|| "Last not found")?;
+    let max = *input.last().ok_or("Last not found")?;
     let last = std::iter::once(max + 3);
-    let seq = input.iter().map(|&v| v).chain(last);
+    let seq = input.iter().copied().chain(last);
 
     let mut summary = HashMap::new();
 
@@ -30,19 +30,18 @@ fn solve_a(input: &[isize]) -> Result<isize, Box<dyn Error>> {
         *entry += 1;
     });
 
-    let result =
-        summary.get(&1).map(|v| *v).unwrap_or(0) * summary.get(&3).map(|v| *v).unwrap_or(0);
+    let result = summary.get(&1).copied().unwrap_or(0) * summary.get(&3).copied().unwrap_or(0);
 
     Ok(result)
 }
 
 fn solve_b(input: &[isize]) -> Result<isize, Box<dyn Error>> {
-    let max = *input.last().ok_or_else(|| "Last not found")?;
+    let max = *input.last().ok_or("Last not found")?;
     let last = std::iter::once(max + 3);
     let first = std::iter::once(0);
 
     let input = first
-        .chain(input.iter().map(|v| *v))
+        .chain(input.iter().copied())
         .chain(last)
         .collect::<Vec<_>>();
 
@@ -73,16 +72,12 @@ fn permutate_rec(
         .enumerate()
         .skip(1)
         .take_while(|(_, v)| **v - start <= 3)
-        .map(|(index, v)| {
-            // println!("{} -> {} (index {})", start, v, index);
-
-            permutate_rec(&input[index..], cache, index_from_start + index)
-        })
+        .map(|(index, _)| permutate_rec(&input[index..], cache, index_from_start + index))
         .sum();
 
     cache.insert(index_from_start, result);
 
-    return result;
+    result
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -94,11 +89,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         Ok((task_a, task_b))
     });
 
-    match result {
-        Ok((a, b)) => {
-            println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed);
-        }
-        _ => {}
+    if let Ok((a, b)) = result {
+        println!("task A: {}\ntask B: {}\nTotal time: {}μs ", a, b, elapsed);
     }
 
     Ok(())

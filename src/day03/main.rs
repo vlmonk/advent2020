@@ -41,11 +41,11 @@ impl GameField {
         let height = objects.len();
         let width = objects.get(0).map(|line| line.len())?;
 
-        return Some(Self {
+        Some(Self {
             objects,
             height,
             width,
-        });
+        })
     }
 
     fn get(&self, x: usize, y: usize) -> Option<Object> {

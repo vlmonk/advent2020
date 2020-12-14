@@ -39,11 +39,14 @@ impl TryFrom<&str> for Input {
             .and_then(|s| s.parse::<usize>().ok())
             .ok_or("Invalid input")?;
 
-        let buses = lines.next().ok_or("Invalid input".into()).and_then(|l| {
-            l.split(',')
-                .map(Bus::try_from)
-                .collect::<Result<Vec<_>, _>>()
-        })?;
+        let buses = lines
+            .next()
+            .ok_or_else(|| "Invalid input".into())
+            .and_then(|l| {
+                l.split(',')
+                    .map(Bus::try_from)
+                    .collect::<Result<Vec<_>, _>>()
+            })?;
 
         Ok(Self { start_time, buses })
     }
@@ -82,9 +85,9 @@ mod solver {
         let (mut start, mut step) = target.get(0)?;
 
         for i in target[1..].iter() {
-            let foo = solve_b_pair(start, step, *i);
-            start = foo.0;
-            step = foo.1;
+            let result = solve_b_pair(start, step, *i);
+            start = result.0;
+            step = result.1;
         }
 
         Some(start)

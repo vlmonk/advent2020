@@ -50,7 +50,7 @@ impl Policy {
         let a = self.list[self.min - 1] == self.char;
         let b = self.list[self.max - 1] == self.char;
 
-        return a ^ b;
+        a ^ b
     }
 }
 

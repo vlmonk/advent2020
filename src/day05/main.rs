@@ -102,7 +102,7 @@ fn main() {
             .ok_or("Can\'t parse result")?;
 
         let mut numbers: Vec<_> = board_passes.iter().map(|pass| pass.seatid()).collect();
-        numbers.sort();
+        numbers.sort_unstable();
 
         let task_a = numbers.iter().max().copied().ok_or("Task A: not found")?;
 

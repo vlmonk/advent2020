@@ -79,7 +79,7 @@ impl<'a> Passprt<'a> {
         let mut passport = Self::default();
         let items = input
             .split(|c| c == '\n' || c == ' ')
-            .filter(|i| i.len() > 0);
+            .filter(|i| !i.is_empty());
         for item in items {
             let mut entry = item.split(':');
             let key = entry

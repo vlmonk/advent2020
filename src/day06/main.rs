@@ -16,16 +16,13 @@ impl Group {
             let mut person = HashSet::new();
 
             for c in p.chars() {
-                match c {
-                    'a'..='z' => {
-                        group_answers.insert(c);
-                        person.insert(c);
-                    }
-                    _ => {}
+                if let 'a'..='z' = c {
+                    group_answers.insert(c);
+                    person.insert(c);
                 }
             }
 
-            if person.len() > 0 {
+            if !person.is_empty() {
                 people.push(person);
             }
         }

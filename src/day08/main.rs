@@ -54,13 +54,13 @@ enum StepResult {
 }
 
 struct CPU<'a> {
-    prog: &'a Programm,
+    prog: &'a [Insruction],
     ip: usize,
     acc: i32,
 }
 
 impl<'a> CPU<'a> {
-    pub fn new(prog: &'a Programm) -> Self {
+    pub fn new(prog: &'a [Insruction]) -> Self {
         Self {
             prog,
             ip: 0,
