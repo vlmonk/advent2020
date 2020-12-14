@@ -9,7 +9,7 @@ const TARGET: i32 = 2020;
 
 impl Repeater {
     pub fn new(mut data: Vec<i32>) -> Self {
-        data.sort();
+        data.sort_unstable();
         Self { data }
     }
 
@@ -44,7 +44,7 @@ impl Repeater {
 
 fn parse_input(input: &str) -> Vec<i32> {
     input
-        .split("\n")
+        .split('\n')
         .filter_map(|i| i.parse::<i32>().ok())
         .collect()
 }

@@ -99,22 +99,18 @@ fn main() {
             .lines()
             .map(BoardPass::parse)
             .collect::<Option<Vec<_>>>()
-            .ok_or_else(|| "Can\'t parse result")?;
+            .ok_or("Can\'t parse result")?;
 
         let mut numbers: Vec<_> = board_passes.iter().map(|pass| pass.seatid()).collect();
         numbers.sort();
 
-        let task_a = numbers
-            .iter()
-            .max()
-            .map(|v| *v)
-            .ok_or_else(|| "Task A: not found")?;
+        let task_a = numbers.iter().max().copied().ok_or("Task A: not found")?;
 
         let task_b = numbers
             .iter()
             .pair()
             .find_map(|(a, b)| if *b == *a + 1 { None } else { Some(a + 1) })
-            .ok_or_else(|| "Task B: not found")?;
+            .ok_or("Task B: not found")?;
 
         Ok((task_a, task_b))
     });
