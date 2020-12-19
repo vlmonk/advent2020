@@ -1,7 +1,8 @@
-#[derive(Debug)]
+use std::{cmp, fmt};
+
 pub struct Grid<T>
 where
-    T: std::fmt::Debug + std::cmp::PartialEq,
+    T: std::cmp::PartialEq,
 {
     data: Vec<T>,
     pub width: usize,
@@ -10,7 +11,7 @@ where
 
 impl<T> Grid<T>
 where
-    T: std::fmt::Debug + std::cmp::PartialEq,
+    T: std::cmp::PartialEq,
 {
     pub fn step<F>(&mut self, changer: F) -> usize
     where
@@ -23,7 +24,6 @@ where
                 let current = self.get(x, y);
                 let next_item = changer(&self, x, y);
                 if *current != next_item {
-                    dbg!(current, &next_item);
                     changed += 1
                 }
                 next.push(next_item);
@@ -69,5 +69,25 @@ where
             height,
             data,
         })
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.data.iter()
+    }
+}
+
+impl<T> fmt::Display for Grid<T>
+where
+    T: fmt::Display + cmp::PartialEq,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                write!(f, "{}", self.get(x, y))?;
+            }
+            write!(f, "\n")?;
+        }
+
+        Ok(())
     }
 }

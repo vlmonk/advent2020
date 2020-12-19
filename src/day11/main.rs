@@ -2,13 +2,23 @@ mod grid;
 
 use grid::Grid;
 use std::error::Error;
-use std::fs;
+use std::{fmt, fs};
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 enum Seat {
     Floor,
     Empty,
     Occupied,
+}
+
+impl fmt::Display for Seat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Seat::Floor => write!(f, "."),
+            Seat::Empty => write!(f, "L"),
+            Seat::Occupied => write!(f, "#"),
+        }
+    }
 }
 
 fn parser(input: char) -> Option<Seat> {
@@ -28,7 +38,6 @@ fn step(grid: &Grid<Seat>, x: usize, y: usize) -> Seat {
         (x, y - 1),
         (x + 1, y - 1),
         (x - 1, y),
-        (x, y),
         (x + 1, y),
         (x - 1, y + 1),
         (x, y + 1),
@@ -42,6 +51,8 @@ fn step(grid: &Grid<Seat>, x: usize, y: usize) -> Seat {
         })
         .map(|(x, y)| (x as usize, y as usize))
         .collect();
+
+    // println!("x: {}, y: {}, filtered count: {}", x, y, filtered.len());
 
     match grid.get(x as usize, y as usize) {
         Seat::Empty => {
@@ -75,20 +86,17 @@ fn step(grid: &Grid<Seat>, x: usize, y: usize) -> Seat {
 fn main() -> Result<(), Box<dyn Error>> {
     let data = fs::read_to_string("data/day11.txt")?;
     let mut grid = Grid::parse(&data, parser).ok_or("parsing error")?;
-    let mut steps = 0;
-
-    dbg!(grid.height);
-    dbg!(grid.width);
 
     loop {
         let changed = grid.step(step);
-        dbg!(steps, changed);
+
         if changed == 0 {
             break;
         }
-
-        steps += 1;
     }
+
+    let task_a = grid.iter().filter(|item| **item == Seat::Occupied).count();
+    dbg!(task_a);
 
     Ok(())
 }
