@@ -1,5 +1,7 @@
+mod direction;
 mod grid;
 
+use direction::Direction;
 use grid::Grid;
 use std::error::Error;
 use std::{fmt, fs};
@@ -30,50 +32,22 @@ fn parser(input: char) -> Option<Seat> {
 }
 
 fn step(grid: &Grid<Seat>, x: usize, y: usize) -> Seat {
-    let x = x as isize;
-    let y = y as isize;
+    let occupied = Direction::all()
+        .filter_map(|d| d.iter(x, y).next())
+        .filter_map(|(x, y)| grid.get(x, y))
+        .filter(|s| **s == Seat::Occupied)
+        .count();
 
-    let around = vec![
-        (x - 1, y - 1),
-        (x, y - 1),
-        (x + 1, y - 1),
-        (x - 1, y),
-        (x + 1, y),
-        (x - 1, y + 1),
-        (x, y + 1),
-        (x + 1, y + 1),
-    ];
-
-    let filtered: Vec<_> = around
-        .into_iter()
-        .filter(|(x, y)| {
-            *x >= 0 && *x < grid.width as isize && *y >= 0 && *y < grid.height as isize
-        })
-        .map(|(x, y)| (x as usize, y as usize))
-        .collect();
-
-    // println!("x: {}, y: {}, filtered count: {}", x, y, filtered.len());
-
-    match grid.get(x as usize, y as usize) {
+    match grid.get(x as usize, y as usize).unwrap() {
         Seat::Empty => {
-            let occupied_count = filtered
-                .iter()
-                .filter(|(x, y)| grid.get(*x, *y) == &Seat::Occupied)
-                .count();
-
-            if occupied_count == 0 {
+            if occupied == 0 {
                 Seat::Occupied
             } else {
                 Seat::Empty
             }
         }
         Seat::Occupied => {
-            let occupied_count = filtered
-                .iter()
-                .filter(|(x, y)| grid.get(*x, *y) == &Seat::Occupied)
-                .count();
-
-            if occupied_count >= 4 {
+            if occupied >= 4 {
                 Seat::Empty
             } else {
                 Seat::Occupied

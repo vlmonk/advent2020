@@ -21,7 +21,7 @@ where
         let mut changed = 0;
         for y in 0..self.height {
             for x in 0..self.width {
-                let current = self.get(x, y);
+                let current = self.get(x, y).unwrap();
                 let next_item = changer(&self, x, y);
                 if *current != next_item {
                     changed += 1
@@ -34,12 +34,14 @@ where
         changed
     }
 
-    pub fn get(&self, x: usize, y: usize) -> &T {
-        assert!(x < self.width);
-        assert!(y < self.height);
+    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
+        if x >= self.width || y >= self.height {
+            return None;
+        }
 
         let index = x + y * self.width;
-        &self.data[index]
+
+        Some(&self.data[index])
     }
 
     pub fn parse<F>(input: &str, parser: F) -> Option<Grid<T>>
@@ -83,7 +85,7 @@ where
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for y in 0..self.height {
             for x in 0..self.width {
-                write!(f, "{}", self.get(x, y))?;
+                write!(f, "{}", self.get(x, y).unwrap())?;
             }
             write!(f, "\n")?;
         }
