@@ -124,8 +124,37 @@ impl<'a> Solver<'a> {
             .sum()
     }
 
+    fn task_b(&self) -> usize {
+        let valid = self
+            .game
+            .nearby
+            .iter()
+            .filter(|ticket| self.is_valid_ticket(ticket))
+            .collect::<Vec<_>>();
+
+        println!("total: {}, valid: {}", self.game.nearby.len(), valid.len());
+
+        let foo = valid.iter().map(|t| t[0]).collect::<Vec<_>>();
+        dbg!(&foo);
+
+        let bar = self
+            .game
+            .ranges
+            .iter()
+            .filter(|(_, range)| foo.iter().all(|value| range.include(*value)))
+            .collect::<Vec<_>>();
+
+        dbg!(bar);
+
+        5
+    }
+
     fn is_valid_field(&self, value: usize) -> bool {
         self.game.ranges.iter().any(|(_, v)| v.include(value))
+    }
+
+    fn is_valid_ticket(&self, ticket: &Ticket) -> bool {
+        ticket.iter().all(|v| self.is_valid_field(*v))
     }
 }
 
@@ -135,7 +164,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let solver = Solver::new(&input);
 
     let task_a = solver.task_a();
+    let task_b = solver.task_b();
 
-    println!("Task A: {}", task_a);
+    println!("Task A: {}\nTask B: {}", task_a, task_b);
     Ok(())
 }
