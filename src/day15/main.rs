@@ -21,10 +21,6 @@ impl Iterator for Game {
     fn next(&mut self) -> Option<Self::Item> {
         self.turn += 1;
 
-        if self.turn % 100000 == 0 {
-            dbg!(self.turn);
-        }
-
         let value = match self.init.pop_front() {
             Some(init) => init,
             None => {
@@ -77,15 +73,20 @@ fn parse_input(input: &str) -> Option<Vec<usize>> {
         .collect::<Option<Vec<_>>>()
 }
 
+const TARGET_A: usize = 2020;
+const TARGET_B: usize = 30000000;
+
 fn main() -> Result<(), Box<dyn Error>> {
     let data = fs::read_to_string("data/day15.txt")?;
     let input = parse_input(&data).ok_or("Invalid input")?;
-
-    dbg!(&input);
-
     let mut game = Game::new(&input);
-    let value = game.nth(30000000 - 1);
-    dbg!(value);
+
+    let task_a = game.nth(TARGET_A - 1).ok_or("Task A not found")?;
+    let task_b = game
+        .nth(TARGET_B - TARGET_A - 1)
+        .ok_or("Task A not found")?;
+
+    println!("Task A: {}\nTask B: {}", task_a, task_b);
 
     Ok(())
 }
