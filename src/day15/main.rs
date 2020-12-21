@@ -1,11 +1,39 @@
 use std::collections::{HashMap, VecDeque};
+use std::default::Default;
 use std::error::Error;
 use std::fs;
 
 #[derive(Debug)]
 enum Seen {
+    Never,
     Once(usize),
     Twice { last: usize, before: usize },
+}
+
+impl Default for Seen {
+    fn default() -> Self {
+        Self::Never
+    }
+}
+
+impl Seen {
+    pub fn see(&mut self, turn: usize) {
+        match self {
+            Seen::Never => *self = Seen::Once(turn),
+            Seen::Once(last) => {
+                *self = Seen::Twice {
+                    before: *last,
+                    last: turn,
+                }
+            }
+            Seen::Twice { last, .. } => {
+                *self = Seen::Twice {
+                    before: *last,
+                    last: turn,
+                }
+            }
+        }
+    }
 }
 
 struct Game {
@@ -37,19 +65,11 @@ impl Iterator for Game {
 
         self.last = Some(value);
 
-        let seen = match self.memory.get(&value) {
-            Some(Seen::Once(last)) => Seen::Twice {
-                before: *last,
-                last: self.turn,
-            },
-            Some(Seen::Twice { last, .. }) => Seen::Twice {
-                before: *last,
-                last: self.turn,
-            },
-            _ => Seen::Once(self.turn),
-        };
+        self.memory
+            .entry(value)
+            .or_insert_with(Seen::default)
+            .see(self.turn);
 
-        self.memory.insert(value, seen);
         Some(value)
     }
 }
