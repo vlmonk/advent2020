@@ -1,10 +1,16 @@
 use std::collections::{HashMap, VecDeque};
 
+#[derive(Debug)]
+enum Seen {
+    Once(usize),
+    Twice { last: usize, before: usize },
+}
+
 struct Game {
     init: VecDeque<usize>,
-    memory: HashMap<usize, usize>,
+    memory: HashMap<usize, Seen>,
     turn: usize,
-    last: Option<usize>
+    last: Option<usize>,
 }
 
 impl Iterator for Game {
@@ -12,13 +18,37 @@ impl Iterator for Game {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.turn += 1;
-        let init = match self.init.pop_front() {
+
+        let value = match self.init.pop_front() {
             Some(init) => init,
-            None => 0
-        }
+            None => {
+                let last = self.last.unwrap_or(0);
+                let seen = self.memory.get(&last);
 
+                if let Some(Seen::Twice { last, before }) = seen {
+                    last - before
+                } else {
+                    0
+                }
+            }
+        };
 
-        Some(init)
+        self.last = Some(value);
+
+        let seen = match self.memory.get(&value) {
+            Some(Seen::Once(last)) => Seen::Twice {
+                before: *last,
+                last: self.turn,
+            },
+            Some(Seen::Twice { last, .. }) => Seen::Twice {
+                before: *last,
+                last: self.turn,
+            },
+            _ => Seen::Once(self.turn),
+        };
+
+        self.memory.insert(value, seen);
+        Some(value)
     }
 }
 
@@ -28,7 +58,7 @@ impl Game {
             init: input.iter().copied().collect(),
             memory: HashMap::new(),
             turn: 0,
-            last: None
+            last: None,
         }
     }
 }
