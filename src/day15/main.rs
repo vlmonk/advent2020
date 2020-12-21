@@ -79,4 +79,13 @@ mod test {
 
         assert_eq!(vec![0, 3, 6, 0, 3, 3, 1, 0, 4, 0], result);
     }
+
+    #[test]
+    fn test_nth() {
+        let input = vec![3, 1, 2];
+        let mut iter = Game::new(&input);
+        let result = iter.nth(2019);
+
+        assert_eq!(Some(1836), result);
+    }
 }
