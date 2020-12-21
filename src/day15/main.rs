@@ -1,4 +1,6 @@
 use std::collections::{HashMap, VecDeque};
+use std::error::Error;
+use std::fs;
 
 #[derive(Debug)]
 enum Seen {
@@ -18,6 +20,10 @@ impl Iterator for Game {
 
     fn next(&mut self) -> Option<Self::Item> {
         self.turn += 1;
+
+        if self.turn % 100000 == 0 {
+            dbg!(self.turn);
+        }
 
         let value = match self.init.pop_front() {
             Some(init) => init,
@@ -63,8 +69,25 @@ impl Game {
     }
 }
 
-fn main() {
-    println!("Day 15 TODO");
+fn parse_input(input: &str) -> Option<Vec<usize>> {
+    let first_line = input.lines().next()?;
+    first_line
+        .split(',')
+        .map(|v| v.parse::<usize>().ok())
+        .collect::<Option<Vec<_>>>()
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let data = fs::read_to_string("data/day15.txt")?;
+    let input = parse_input(&data).ok_or("Invalid input")?;
+
+    dbg!(&input);
+
+    let mut game = Game::new(&input);
+    let value = game.nth(30000000 - 1);
+    dbg!(value);
+
+    Ok(())
 }
 
 #[cfg(test)]
