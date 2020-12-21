@@ -66,15 +66,11 @@ impl TryFrom<&str> for GameInput {
             })
             .ok_or("invald input")?;
 
-        dbg!(&ranges);
-
         let my = sections
             .next()
             .and_then(|section| section.lines().nth(1))
             .and_then(parse_ticket)
             .ok_or("Invalid input: my ticket")?;
-
-        dbg!(&my);
 
         let nearby = sections
             .next()
@@ -87,8 +83,6 @@ impl TryFrom<&str> for GameInput {
             })
             .ok_or("Invalid input: nearby ticket")?;
 
-        dbg!(&nearby);
-
         let fields = ranges.len();
 
         Ok(GameInput {
@@ -100,10 +94,27 @@ impl TryFrom<&str> for GameInput {
     }
 }
 
+struct Solver<'a> {
+    game: &'a GameInput,
+}
+
+impl<'a> Solver<'a> {
+    fn new(game: &'a GameInput) -> Self {
+        Self { game }
+    }
+
+    fn task_a(&self) -> usize {
+        0
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let raw = fs::read_to_string("data/day16.txt")?;
     let input = GameInput::try_from(raw.as_ref())?;
-    dbg!(input);
+    let solver = Solver::new(&input);
 
+    let task_a = solver.task_a();
+
+    println!("Task A: {}", task_a);
     Ok(())
 }
