@@ -12,10 +12,22 @@ struct Range {
     to: usize,
 }
 
+impl Range {
+    fn include(&self, input: usize) -> bool {
+        input >= self.from && input <= self.to
+    }
+}
+
 #[derive(Debug)]
 struct Ranges {
     first: Range,
     second: Range,
+}
+
+impl Ranges {
+    fn include(&self, value: usize) -> bool {
+        self.first.include(value) || self.second.include(value)
+    }
 }
 
 type Ticket = Vec<usize>;
@@ -104,7 +116,16 @@ impl<'a> Solver<'a> {
     }
 
     fn task_a(&self) -> usize {
-        0
+        self.game
+            .nearby
+            .iter()
+            .flat_map(|v| v.iter())
+            .filter(|v| !self.is_valid_field(**v))
+            .sum()
+    }
+
+    fn is_valid_field(&self, value: usize) -> bool {
+        self.game.ranges.iter().any(|(_, v)| v.include(value))
     }
 }
 
