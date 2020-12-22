@@ -3,26 +3,51 @@ use std::convert::TryFrom;
 use std::error::Error;
 use std::fs;
 
-type Deck = VecDeque<usize>;
+#[derive(Debug)]
+struct Deck(VecDeque<usize>);
 
 fn parse_deck(input: &str) -> Result<Deck, Box<dyn Error>> {
-    input
+    let cards = input
         .lines()
         .skip(1)
         .map(|line| {
             line.parse::<usize>()
-                .map_err(|_| format!("invalid input: {}", line).into())
+                .map_err(|_| format!("invalid input: {}", line))
         })
-        .collect()
+        .collect::<Result<VecDeque<_>, _>>()?;
+
+    Ok(Deck(cards))
 }
 
-fn score(input: &Deck) -> usize {
-    input
-        .iter()
-        .rev()
-        .enumerate()
-        .map(|(idx, value)| (idx + 1) * value)
-        .sum()
+impl Deck {
+    pub fn score(&self) -> usize {
+        self.0
+            .iter()
+            .rev()
+            .enumerate()
+            .map(|(idx, value)| (idx + 1) * value)
+            .sum()
+    }
+
+    pub fn top(&mut self) -> Option<usize> {
+        self.0.get(0).copied()
+    }
+
+    pub fn change(&mut self, first: usize, second: usize) {
+        let _ = self.0.pop_front();
+        self.0.push_back(first);
+        self.0.push_back(second);
+    }
+
+    pub fn remove_top(&mut self) {
+        let _ = self.0.pop_front();
+    }
+}
+
+enum TurnResult {
+    WinA,
+    WinB,
+    Continue,
 }
 
 #[derive(Debug)]
@@ -46,31 +71,36 @@ impl TryFrom<&str> for Game {
 impl Game {
     pub fn play(&mut self) -> usize {
         loop {
-            if self.player_a.is_empty() {
-                return score(&self.player_b);
+            match self.turn() {
+                TurnResult::WinA => return self.player_a.score(),
+                TurnResult::WinB => return self.player_b.score(),
+                _ => {}
             }
-
-            if self.player_b.is_empty() {
-                return score(&self.player_a);
-            }
-
-            self.turn();
         }
     }
 
-    fn turn(&mut self) {
-        let a = self.player_a.pop_front().unwrap();
-        let b = self.player_b.pop_front().unwrap();
+    fn turn(&mut self) -> TurnResult {
+        let a = match self.player_a.top() {
+            Some(a) => a,
+            _ => return TurnResult::WinB,
+        };
+
+        let b = match self.player_b.top() {
+            Some(b) => b,
+            _ => return TurnResult::WinA,
+        };
 
         if a > b {
-            self.player_a.push_back(a);
-            self.player_a.push_back(b);
+            self.player_a.change(a, b);
+            self.player_b.remove_top();
         } else if a < b {
-            self.player_b.push_back(b);
-            self.player_b.push_back(a);
+            self.player_b.change(b, a);
+            self.player_a.remove_top();
         } else {
-            panic!("Equal cards");
+            panic!("Equal cards")
         }
+
+        TurnResult::Continue
     }
 }
 
