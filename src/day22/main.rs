@@ -1,10 +1,13 @@
-use std::collections::VecDeque;
+use std::collections::hash_map::DefaultHasher;
+use std::collections::{HashSet, VecDeque};
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt;
 use std::fs;
+use std::hash::Hash;
+use std::hash::Hasher;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Deck(VecDeque<usize>);
 
 fn parse_deck(input: &str) -> Result<Deck, Box<dyn Error>> {
@@ -66,6 +69,12 @@ impl Deck {
 
         Deck(copy)
     }
+
+    pub fn hash(&self) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        self.0.hash(&mut hasher);
+        hasher.finish()
+    }
 }
 
 enum GameResult {
@@ -83,6 +92,7 @@ enum TurnResult {
 struct Game {
     player_a: Deck,
     player_b: Deck,
+    memory: HashSet<(u64, u64)>,
 }
 
 impl fmt::Display for Game {
@@ -99,17 +109,26 @@ impl TryFrom<&str> for Game {
         let player_a = parse_deck(sections.next().ok_or("player A input not found")?)?;
         let player_b = parse_deck(sections.next().ok_or("player B input not found")?)?;
 
-        Ok(Self { player_a, player_b })
+        Ok(Self {
+            player_a,
+            player_b,
+            memory: HashSet::new(),
+        })
     }
 }
 
 impl Game {
     pub fn new(player_a: Deck, player_b: Deck) -> Self {
-        Self { player_a, player_b }
+        Self {
+            player_a,
+            player_b,
+            memory: HashSet::new(),
+        }
     }
 
     pub fn play(&mut self) -> usize {
         loop {
+            println!("Play: {}", self);
             match self.turn() {
                 TurnResult::WinA => return self.player_a.score(),
                 TurnResult::WinB => return self.player_b.score(),
@@ -158,7 +177,10 @@ impl Game {
             match self.turn_recursive() {
                 TurnResult::WinA => return GameResult::WinA,
                 TurnResult::WinB => return GameResult::WinB,
-                _ => {}
+                _ => {
+                    let hash = (self.player_a.hash(), self.player_b.hash());
+                    self.memory.insert(hash);
+                }
             }
         }
     }
@@ -178,6 +200,11 @@ impl Game {
                 return TurnResult::WinA;
             }
         };
+
+        let hash = (self.player_a.hash(), self.player_b.hash());
+        if self.memory.contains(&hash) {
+            return TurnResult::WinA;
+        }
 
         if self.player_a.has(a) && self.player_b.has(b) {
             let next_a = self.player_a.copy(a);
@@ -207,9 +234,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut game_b = game_a.clone();
 
     let task_a = game_a.play();
-    let task_b = game_b.play_recursive();
-
     println!("Task A: {}", task_a);
+
+    let task_b = game_b.play_recursive();
     println!("Task B: {}", task_b);
+
     Ok(())
 }
