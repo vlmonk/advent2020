@@ -16,6 +16,15 @@ fn parse_deck(input: &str) -> Result<Deck, Box<dyn Error>> {
         .collect()
 }
 
+fn score(input: &Deck) -> usize {
+    input
+        .iter()
+        .rev()
+        .enumerate()
+        .map(|(idx, value)| (idx + 1) * value)
+        .sum()
+}
+
 #[derive(Debug)]
 struct Game {
     player_a: Deck,
@@ -34,11 +43,42 @@ impl TryFrom<&str> for Game {
     }
 }
 
+impl Game {
+    pub fn play(&mut self) -> usize {
+        loop {
+            if self.player_a.is_empty() {
+                return score(&self.player_b);
+            }
+
+            if self.player_b.is_empty() {
+                return score(&self.player_a);
+            }
+
+            self.turn();
+        }
+    }
+
+    fn turn(&mut self) {
+        let a = self.player_a.pop_front().unwrap();
+        let b = self.player_b.pop_front().unwrap();
+
+        if a > b {
+            self.player_a.push_back(a);
+            self.player_a.push_back(b);
+        } else if a < b {
+            self.player_b.push_back(b);
+            self.player_b.push_back(a);
+        } else {
+            panic!("Equal cards");
+        }
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let input = fs::read_to_string("data/day22.txt")?;
-    let game = Game::try_from(input.as_ref())?;
+    let mut game = Game::try_from(input.as_ref())?;
 
-    dbg!(game);
-
+    let task_a = game.play();
+    println!("Task A: {}", task_a);
     Ok(())
 }
