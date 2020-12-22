@@ -128,7 +128,7 @@ impl Game {
 
     pub fn play(&mut self) -> usize {
         loop {
-            println!("Play: {}", self);
+            println!("Turn: {}", self);
             match self.turn() {
                 TurnResult::WinA => return self.player_a.score(),
                 TurnResult::WinB => return self.player_b.score(),
@@ -174,13 +174,25 @@ impl Game {
     fn game_recursive(&mut self) -> GameResult {
         println!("Game recursive: {}", self);
         loop {
+            let hash = (self.player_a.hash(), self.player_b.hash());
+
+            if self.memory.contains(&hash) {
+                println!("Player A win because of memory");
+                return GameResult::WinA;
+            }
+
+            self.memory.insert(hash);
+
             match self.turn_recursive() {
-                TurnResult::WinA => return GameResult::WinA,
-                TurnResult::WinB => return GameResult::WinB,
-                _ => {
-                    let hash = (self.player_a.hash(), self.player_b.hash());
-                    self.memory.insert(hash);
+                TurnResult::WinA => {
+                    println!("Player A win");
+                    return GameResult::WinA;
                 }
+                TurnResult::WinB => {
+                    println!("Player B win");
+                    return GameResult::WinB;
+                }
+                _ => {}
             }
         }
     }
@@ -200,11 +212,6 @@ impl Game {
                 return TurnResult::WinA;
             }
         };
-
-        let hash = (self.player_a.hash(), self.player_b.hash());
-        if self.memory.contains(&hash) {
-            return TurnResult::WinA;
-        }
 
         if self.player_a.has(a) && self.player_b.has(b) {
             let next_a = self.player_a.copy(a);
