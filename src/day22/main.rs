@@ -69,12 +69,6 @@ impl Deck {
 
         Deck(copy)
     }
-
-    pub fn hash(&self) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        self.0.hash(&mut hasher);
-        hasher.finish()
-    }
 }
 
 enum GameResult {
@@ -92,7 +86,7 @@ enum TurnResult {
 struct Game {
     player_a: Deck,
     player_b: Deck,
-    memory: HashSet<(u64, u64)>,
+    memory: HashSet<(Deck, Deck)>,
 }
 
 impl fmt::Display for Game {
@@ -174,14 +168,14 @@ impl Game {
     fn game_recursive(&mut self) -> GameResult {
         println!("Game recursive: {}", self);
         loop {
-            let hash = (self.player_a.hash(), self.player_b.hash());
+            let entry = (self.player_a.clone(), self.player_b.clone());
 
-            if self.memory.contains(&hash) {
+            if self.memory.contains(&entry) {
                 println!("Player A win because of memory");
                 return GameResult::WinA;
             }
 
-            self.memory.insert(hash);
+            self.memory.insert(entry);
 
             match self.turn_recursive() {
                 TurnResult::WinA => {
