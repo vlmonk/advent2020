@@ -5,7 +5,7 @@ use std::fmt;
 use std::fs;
 
 #[derive(PartialEq, Eq, Hash, Debug)]
-struct Point {
+struct Point3 {
     x: isize,
     y: isize,
     z: isize,
@@ -13,12 +13,12 @@ struct Point {
 
 const AROUND: [isize; 3] = [-1, 0, 1];
 
-impl Point {
+impl Point3 {
     pub fn new(x: isize, y: isize, z: isize) -> Self {
-        Self { x, y, z }
+        Point3 { x, y, z }
     }
 
-    pub fn around(&self) -> impl Iterator<Item = Point> {
+    pub fn around(&self) -> impl Iterator<Item = Point3> {
         let px = self.x;
         let py = self.y;
         let pz = self.z;
@@ -29,7 +29,7 @@ impl Point {
             .map(|(x, y)| AROUND.iter().map(move |z| (x, y, *z)))
             .flatten()
             .filter(|(x, y, z)| *x != 0 || *y != 0 || *z != 0)
-            .map(move |(x, y, z)| Point::new(x + px, y + py, z + pz))
+            .map(move |(x, y, z)| Point3::new(x + px, y + py, z + pz))
     }
 }
 
@@ -44,7 +44,7 @@ struct Dimension {
 }
 
 impl Dimension {
-    pub fn extend(&mut self, point: &Point) {
+    pub fn extend(&mut self, point: &Point3) {
         self.min_x = self.min_x.min(point.x - 1);
         self.max_x = self.max_x.max(point.x + 1);
         self.min_y = self.min_y.min(point.y - 1);
@@ -53,7 +53,7 @@ impl Dimension {
         self.max_z = self.max_z.max(point.z + 1);
     }
 
-    pub fn from_point(point: &Point) -> Self {
+    pub fn from_point(point: &Point3) -> Self {
         Self {
             min_x: point.x - 1,
             max_x: point.x + 1,
@@ -67,7 +67,7 @@ impl Dimension {
 
 #[derive(Debug)]
 struct Space {
-    world: HashSet<Point>,
+    world: HashSet<Point3>,
     dimension: Option<Dimension>,
 }
 
@@ -84,7 +84,7 @@ impl fmt::Display for Space {
                 write!(f, "Layer {}\n", z);
                 for y in d.min_y + 1..d.max_y {
                     for x in d.min_x + 1..d.max_x {
-                        if self.active(&Point::new(x, y, z)) {
+                        if self.active(&Point3::new(x, y, z)) {
                             write!(f, "#");
                         } else {
                             write!(f, ".");
@@ -115,7 +115,7 @@ impl Space {
         for x in 0..input.width {
             for y in 0..input.height {
                 if let Some(Element::Active) = input.get(x, y) {
-                    let point = Point::new(x as isize, y as isize, 0);
+                    let point = Point3::new(x as isize, y as isize, 0);
                     space.add_point(point);
                     // dbg!(&space.dimension);
                 }
@@ -124,7 +124,7 @@ impl Space {
         space
     }
 
-    fn add_point(&mut self, point: Point) {
+    fn add_point(&mut self, point: Point3) {
         match self.dimension.as_mut() {
             Some(d) => d.extend(&point),
             None => self.dimension = Some(Dimension::from_point(&point)),
@@ -133,7 +133,7 @@ impl Space {
         self.world.insert(point);
     }
 
-    fn active(&self, p: &Point) -> bool {
+    fn active(&self, p: &Point3) -> bool {
         self.world.contains(p)
     }
 
@@ -162,7 +162,7 @@ impl Space {
         space
     }
 
-    fn points(&self) -> Box<dyn Iterator<Item = Point>> {
+    fn points(&self) -> Box<dyn Iterator<Item = Point3>> {
         if let Some(d) = &self.dimension {
             let min_x = d.min_x;
             let max_x = d.max_x;
@@ -179,10 +179,10 @@ impl Space {
                 .flatten()
                 .map(move |(x, y)| (min_z..=max_z).into_iter().map(move |z| (x, y, z)))
                 .flatten()
-                .map(|(x, y, z)| Point::new(x, y, z));
+                .map(|(x, y, z)| Point3::new(x, y, z));
             Box::new(iter)
         } else {
-            Box::new(std::iter::empty::<Point>())
+            Box::new(std::iter::empty::<Point3>())
         }
     }
 }
