@@ -20,9 +20,22 @@ struct Point {
     z: isize,
 }
 
+const AROUND: [isize; 3] = [-1, 0, 1];
+
 impl Point {
     pub fn new(x: isize, y: isize, z: isize) -> Self {
         Self { x, y, z }
+    }
+
+    pub fn around(&self) -> impl Iterator<Item = Point> {
+        AROUND
+            .iter()
+            .map(|x| AROUND.iter().map(move |y| (*x, *y)))
+            .flatten()
+            .map(|(x, y)| AROUND.iter().map(move |z| (x, y, *z)))
+            .flatten()
+            .filter(|(x, y, z)| *x != 0 || *y != 0 || *z != 0)
+            .map(|(x, y, z)| Point::new(x, y, z))
     }
 }
 
@@ -98,4 +111,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     dbg!(space);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_iter_total() {
+        let point = Point::new(0, 0, 0);
+        let total = point.around().count();
+
+        assert_eq!(total, 26);
+    }
 }
