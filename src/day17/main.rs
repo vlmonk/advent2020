@@ -3,7 +3,17 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::fs;
 
-#[derive(PartialEq, Eq, Hash)]
+fn extend_min(a: Option<isize>, b: isize) -> Option<isize> {
+    let value = if let Some(a) = a { a } else { b };
+    Some(value.min(b - 1))
+}
+
+fn extend_max(a: Option<isize>, b: isize) -> Option<isize> {
+    let value = if let Some(a) = a { a } else { b };
+    Some(value.max(b + 1))
+}
+
+#[derive(PartialEq, Eq, Hash, Debug)]
 struct Point {
     x: isize,
     y: isize,
@@ -16,6 +26,7 @@ impl Point {
     }
 }
 
+#[derive(Debug)]
 struct Space {
     world: HashSet<Point>,
     min_x: Option<isize>,
@@ -39,18 +50,33 @@ impl Space {
         }
     }
 
+    pub fn from_grid(input: Grid<Element>) -> Self {
+        let mut space = Space::new();
+        for x in 0..input.width {
+            for y in 0..input.height {
+                if let Some(Element::Active) = input.get(x, y) {
+                    let point = Point::new(x as isize, y as isize, 0);
+                    space.add_point(point);
+                }
+            }
+        }
+        space
+    }
+
     pub fn add_point(&mut self, point: Point) {
-        self.min_x = if let Some(min_x) = self.min_x {
-            Some(min_x.min(point.x))
-        } else {
-            Some(point.x)
-        };
+        self.min_x = extend_min(self.min_x, point.x);
+        self.min_y = extend_min(self.min_y, point.y);
+        self.min_z = extend_min(self.min_z, point.z);
+
+        self.max_x = extend_max(self.max_x, point.x);
+        self.max_y = extend_max(self.max_y, point.y);
+        self.max_z = extend_max(self.min_z, point.z);
 
         self.world.insert(point);
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum Element {
     Active,
     Inactive,
@@ -67,6 +93,9 @@ fn parser(input: char) -> Option<Element> {
 fn main() -> Result<(), Box<dyn Error>> {
     let raw = fs::read_to_string("data/day17.txt")?;
     let grid = Grid::parse(&raw, parser).ok_or("can't parse input")?;
+    let space = Space::from_grid(grid);
+
+    dbg!(space);
 
     Ok(())
 }
