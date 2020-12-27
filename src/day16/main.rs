@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fs;
@@ -134,19 +134,41 @@ impl<'a> Solver<'a> {
 
         println!("total: {}, valid: {}", self.game.nearby.len(), valid.len());
 
-        let foo = valid.iter().map(|t| t[0]).collect::<Vec<_>>();
-        dbg!(&foo);
+        let mut order: HashMap<usize, &str> = HashMap::new();
+        let mut founded: HashSet<&str> = HashSet::new();
 
-        let bar = self
-            .game
-            .ranges
+        for _ in 0..self.game.fields {
+            let (idx, key) = (0..self.game.fields)
+                .filter(|idx| !order.contains_key(&idx))
+                .find_map(|idx| {
+                    let numbers = valid.iter().map(|t| t[idx]).collect::<Vec<_>>();
+                    let names = self
+                        .game
+                        .ranges
+                        .iter()
+                        .filter(|(_, range)| numbers.iter().all(|value| range.include(*value)))
+                        .map(|(name, _)| name.as_ref())
+                        .filter(|name| !founded.contains(name))
+                        .collect::<Vec<_>>();
+
+                    if names.len() == 1 {
+                        let first = *names.first()?;
+                        Some((idx, first))
+                    } else {
+                        None
+                    }
+                })
+                .expect("not found");
+
+            order.insert(idx, key);
+            founded.insert(key);
+        }
+
+        order
             .iter()
-            .filter(|(_, range)| foo.iter().all(|value| range.include(*value)))
-            .collect::<Vec<_>>();
-
-        dbg!(bar);
-
-        5
+            .filter(|(_, v)| v.starts_with("departure"))
+            .map(|(idx, _)| self.game.my[*idx])
+            .fold(1, |acc, n| acc * n)
     }
 
     fn is_valid_field(&self, value: usize) -> bool {
