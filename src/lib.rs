@@ -1,3 +1,4 @@
+pub mod grid;
 use std::time::Instant;
 
 pub fn measure<T, F>(f: F) -> (T, u128)

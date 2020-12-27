@@ -1,8 +1,7 @@
 mod direction;
-mod grid;
 
+use advent2020::grid::Grid;
 use direction::Direction;
-use grid::Grid;
 use std::error::Error;
 use std::{fmt, fs};
 
