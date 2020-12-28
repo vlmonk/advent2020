@@ -26,11 +26,25 @@ struct Point3 {
     z: isize,
 }
 
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+struct Point4 {
+    x: isize,
+    y: isize,
+    z: isize,
+    w: isize,
+}
+
 const AROUND: [isize; 3] = [-1, 0, 1];
 
 impl Point3 {
     pub fn new(x: isize, y: isize, z: isize) -> Self {
         Point3 { x, y, z }
+    }
+}
+
+impl Point4 {
+    pub fn new(x: isize, y: isize, z: isize, w: isize) -> Self {
+        Point4 { x, y, z, w }
     }
 }
 
@@ -71,6 +85,56 @@ impl DimensionBound for Point3 {
     }
 }
 
+impl DimensionBound for Point4 {
+    fn add(&self, hrs: &Self) -> Self {
+        Self::new(
+            self.x + hrs.x,
+            self.y + hrs.y,
+            self.z + hrs.z,
+            self.w + hrs.w,
+        )
+    }
+
+    fn sub(&self, hrs: &Self) -> Self {
+        Self::new(
+            self.x - hrs.x,
+            self.y - hrs.y,
+            self.z - hrs.z,
+            self.w - hrs.w,
+        )
+    }
+
+    fn one() -> Self {
+        Self::new(1, 1, 1, 1)
+    }
+
+    fn all(&self, hrs: &Self) -> Box<dyn Iterator<Item = Self>> {
+        let min_x = self.x;
+        let max_x = hrs.x;
+
+        let min_y = self.y;
+        let max_y = hrs.y;
+
+        let min_z = self.z;
+        let max_z = hrs.z;
+
+        let min_w = self.w;
+        let max_w = hrs.w;
+
+        let iter = (min_x..=max_x)
+            .into_iter()
+            .map(move |x| (min_y..=max_y).into_iter().map(move |y| (x, y)))
+            .flatten()
+            .map(move |(x, y)| (min_z..=max_z).into_iter().map(move |z| (x, y, z)))
+            .flatten()
+            .map(move |(x, y, z)| (min_w..=max_w).into_iter().map(move |w| (x, y, z, w)))
+            .flatten()
+            .map(|(x, y, z, w)| Point4::new(x, y, z, w));
+
+        Box::new(iter)
+    }
+}
+
 impl Point for Point3 {
     fn from_xy(x: isize, y: isize) -> Self {
         Self { x, y, z: 0 }
@@ -103,6 +167,46 @@ impl Point for Point3 {
         self.x = self.x.max(p.x);
         self.y = self.y.max(p.y);
         self.z = self.z.max(p.z);
+    }
+}
+
+impl Point for Point4 {
+    fn from_xy(x: isize, y: isize) -> Self {
+        Self { x, y, z: 0, w: 0 }
+    }
+
+    fn around(&self) -> Box<dyn Iterator<Item = Self>> {
+        let px = self.x;
+        let py = self.y;
+        let pz = self.z;
+        let pw = self.w;
+
+        let iter = AROUND
+            .iter()
+            .map(|x| AROUND.iter().map(move |y| (*x, *y)))
+            .flatten()
+            .map(|(x, y)| AROUND.iter().map(move |z| (x, y, *z)))
+            .flatten()
+            .map(|(x, y, z)| AROUND.iter().map(move |w| (x, y, z, *w)))
+            .flatten()
+            .filter(|(x, y, z, w)| *x != 0 || *y != 0 || *z != 0 || *w != 0)
+            .map(move |(x, y, z, w)| Point4::new(x + px, y + py, z + pz, w + pw));
+
+        Box::new(iter)
+    }
+
+    fn extend_min(&mut self, p: &Self) {
+        self.x = self.x.min(p.x);
+        self.y = self.y.min(p.y);
+        self.z = self.z.min(p.z);
+        self.w = self.w.min(p.w);
+    }
+
+    fn extend_max(&mut self, p: &Self) {
+        self.x = self.x.max(p.x);
+        self.y = self.y.max(p.y);
+        self.z = self.z.max(p.z);
+        self.w = self.w.max(p.w);
     }
 }
 
@@ -300,7 +404,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut space: Space<Point3> = Space::from_grid(grid);
 
     for _ in 0..6 {
-        println!("{}", space);
+        // println!("{}", space);
+        space = space.step();
+    }
+
+    dbg!(space.total());
+
+    let grid = Grid::parse(&raw, parser).ok_or("can't parse input")?;
+    let mut space: Space<Point4> = Space::from_grid(grid);
+
+    for _ in 0..6 {
+        // println!("{}", space);
         space = space.step();
     }
 
