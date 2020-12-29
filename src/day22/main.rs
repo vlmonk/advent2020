@@ -56,7 +56,7 @@ impl Deck {
     }
 
     pub fn add_front(&mut self, value: usize) {
-        self.0.push_back(value)
+        self.0.push_front(value)
     }
 
     pub fn has(&self, value: usize) -> bool {
@@ -167,6 +167,7 @@ impl Game {
 
     fn game_recursive(&mut self) -> GameResult {
         println!("Game recursive: {}", self);
+
         loop {
             let entry = (self.player_a.clone(), self.player_b.clone());
 
@@ -192,7 +193,7 @@ impl Game {
     }
 
     fn turn_recursive(&mut self) -> TurnResult {
-        println!("Turn: {}", self);
+        // println!("Turn: {}", self);
 
         let a = match self.player_a.top() {
             Some(a) => a,
