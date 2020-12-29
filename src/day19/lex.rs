@@ -1,12 +1,12 @@
 #[derive(Debug, PartialEq)]
-enum Lex {
+pub enum Lex {
     Num(usize),
     Column,
     Char(char),
     Pipe,
 }
 
-struct LexerIter<'a> {
+pub struct LexerIter<'a> {
     input: &'a str,
 }
 
