@@ -43,7 +43,7 @@ fn parse_term(input: &[Lex]) -> ParseResult<RuleBody> {
     }
 }
 
-fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody> {
+fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody::Refs> {
     let mut refs = vec![];
     let mut total = 0;
 
@@ -67,9 +67,11 @@ fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody> {
 }
 
 fn parse_or(input: &[Lex]) -> ParseResult<RuleBody> {
-    let part_a = parse_refs(input)?;
+    let (part_a, n) = parse_refs(input)?;
+    let _ = parse_pipe(&input[n..])?;
+    let (part_b, m) = parse_refs(&input[n + 1..])?;
 
-    None
+    Some((RuleBody::Or(part_a, part_b), m))
 }
 
 fn parse_body(input: &[Lex]) -> ParseResult<RuleBody> {
