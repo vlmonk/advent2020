@@ -1,11 +1,25 @@
 use crate::lex::{Lex, LexerIter};
+use std::fmt;
 
 type ParseResult<T> = Option<(T, usize)>;
+
+fn format_refs(input: &[usize]) -> String {
+    input
+        .iter()
+        .map(|v| format!("{}", v))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
 
 #[derive(Debug, PartialEq)]
 struct Rule {
     id: usize,
     body: RuleBody,
+}
+impl fmt::Display for Rule {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {}", self.id, self.body)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -13,6 +27,16 @@ enum RuleBody {
     Term(char),
     Refs(Vec<usize>),
     Or(Vec<usize>, Vec<usize>),
+}
+
+impl fmt::Display for RuleBody {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            RuleBody::Term(c) => write!(f, "'{}'", c),
+            RuleBody::Refs(v) => write!(f, "{}", format_refs(v)),
+            RuleBody::Or(a, b) => write!(f, "{} | {}", format_refs(a), format_refs(b)),
+        }
+    }
 }
 
 fn parse_id(input: &[Lex]) -> ParseResult<usize> {
@@ -43,7 +67,7 @@ fn parse_term(input: &[Lex]) -> ParseResult<RuleBody> {
     }
 }
 
-fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody::Refs> {
+fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody> {
     let mut refs = vec![];
     let mut total = 0;
 
@@ -71,7 +95,8 @@ fn parse_or(input: &[Lex]) -> ParseResult<RuleBody> {
     let _ = parse_pipe(&input[n..])?;
     let (part_b, m) = parse_refs(&input[n + 1..])?;
 
-    Some((RuleBody::Or(part_a, part_b), m))
+    None
+    // Some((RuleBody::Or(part_a, part_b), m))
 }
 
 fn parse_body(input: &[Lex]) -> ParseResult<RuleBody> {
@@ -100,38 +125,23 @@ mod test {
     fn parse_simple() {
         let input = r#"0: "b""#;
         let rule = parse_rule(&input);
-        assert_eq!(
-            rule,
-            Rule {
-                id: 0,
-                body: RuleBody::Term('b')
-            }
-        );
+
+        assert_eq!("0: 'b'", rule.to_string());
     }
 
     #[test]
     fn parse_ref() {
-        let input = "4: 1 2";
+        let input = "4: 1    2";
         let rule = parse_rule(&input);
-        assert_eq!(
-            rule,
-            Rule {
-                id: 4,
-                body: RuleBody::Refs(vec![1, 2])
-            }
-        );
+
+        assert_eq!("4: 1 2", rule.to_string());
     }
 
     #[test]
     fn parse_or() {
         let input = "3: 4 5 | 5 4";
         let rule = parse_rule(&input);
-        assert_eq!(
-            rule,
-            Rule {
-                id: 4,
-                body: RuleBody::Or(vec![4, 5], vec![5, 4])
-            }
-        );
+
+        assert_eq!("3: 4 5 | 5 4", rule.to_string());
     }
 }
