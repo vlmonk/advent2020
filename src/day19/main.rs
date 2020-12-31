@@ -1,18 +1,19 @@
 mod lex;
 mod par;
 
-// enum RuleBody {
-//     Ref(usize),
-//     Term(char),
-//     Seq(Vec<RuleBody>),
-//     Or(RuleBody),
-// }
+use std::error::Error;
+use std::fs;
 
-// struct Rule {
-//     id: usize,
-//     body: RuleBody,
-// }
+fn main() -> Result<(), Box<dyn Error>> {
+    let raw = fs::read_to_string("data/day19.txt")?;
+    let mut section = raw.split("\n\n");
 
-fn main() {
-    println!("Placeholder for day 19");
+    let rules_raw = section.nth(0).ok_or("Invalid input")?;
+    let rules = rules_raw.lines().map(|l| par::parse(l)).collect::<Vec<_>>();
+
+    for rule in rules.iter() {
+        println!("{}", rule);
+    }
+
+    Ok(())
 }

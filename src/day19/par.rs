@@ -1,7 +1,6 @@
 use crate::lex::{Lex, LexerIter};
 use std::fmt;
-
-type ParseResult<T> = Option<(T, usize)>;
+use std::iter::Peekable;
 
 fn format_refs(input: &[usize]) -> String {
     input
@@ -12,7 +11,7 @@ fn format_refs(input: &[usize]) -> String {
 }
 
 #[derive(Debug, PartialEq)]
-struct Rule {
+pub struct Rule {
     id: usize,
     body: RuleBody,
 }
@@ -39,77 +38,77 @@ impl fmt::Display for RuleBody {
     }
 }
 
-fn parse_id(input: &[Lex]) -> ParseResult<usize> {
-    match input[0] {
-        Lex::Num(id) => Some((id, 1)),
-        _ => None,
+fn parse_id(input: &mut Peekable<LexerIter>) -> usize {
+    match input.next() {
+        Some(Lex::Num(id)) => id,
+        _ => panic!("Invalid token"),
     }
 }
 
-fn parse_column(input: &[Lex]) -> ParseResult<()> {
-    match input[0] {
-        Lex::Column => Some(((), 1)),
-        _ => None,
-    }
-}
+fn parse_ref_list(input: &mut Peekable<LexerIter>) -> Vec<usize> {
+    let first = match input.next() {
+        Some(Lex::Num(n)) => n,
+        _ => panic!("Invalid token"),
+    };
 
-fn parse_pipe(input: &[Lex]) -> Option<()> {
-    match input[0] {
-        Lex::Pipe => Some(()),
-        _ => None,
-    }
-}
+    let mut result = vec![first];
 
-fn parse_term(input: &[Lex]) -> ParseResult<RuleBody> {
-    match input[0] {
-        Lex::Char(c) => Some((RuleBody::Term(c), 1)),
-        _ => None,
-    }
-}
-
-fn parse_refs(input: &[Lex]) -> ParseResult<RuleBody> {
-    let mut refs = vec![];
-    let mut total = 0;
-
-    if let Lex::Num(v) = input[0] {
-        refs.push(v);
-        total += 1
-    } else {
-        return None;
-    }
-
-    for el in input[1..].iter() {
-        if let Lex::Num(v) = el {
-            total += 1;
-            refs.push(*v);
-        } else {
-            break;
+    loop {
+        match input.peek() {
+            Some(Lex::Num(n)) => {
+                result.push(*n);
+                input.next();
+            }
+            _ => break,
         }
     }
 
-    Some((RuleBody::Refs(refs), total))
+    result
 }
 
-fn parse_or(input: &[Lex]) -> ParseResult<RuleBody> {
-    let (part_a, n) = parse_refs(input)?;
-    let _ = parse_pipe(&input[n..])?;
-    let (part_b, m) = parse_refs(&input[n + 1..])?;
+fn parse_refs(input: &mut Peekable<LexerIter>) -> RuleBody {
+    let a = parse_ref_list(input);
 
-    None
-    // Some((RuleBody::Or(part_a, part_b), m))
+    match input.next() {
+        None => RuleBody::Refs(a),
+        Some(Lex::Pipe) => {
+            let b = parse_ref_list(input);
+            assert_eq!(input.next(), None);
+            RuleBody::Or(a, b)
+        }
+        _ => panic!("Invalid token"),
+    }
 }
 
-fn parse_body(input: &[Lex]) -> ParseResult<RuleBody> {
-    parse_term(input)
-        .or_else(|| parse_refs(input))
-        .or_else(|| parse_or(input))
+// fn parse_or(input: &[Lex]) -> ParseResult<RuleBody> {
+//     let (part_a, n) = parse_refs(input)?;
+//     let _ = parse_pipe(&input[n..])?;
+//     let (part_b, m) = parse_refs(&input[n + 1..])?;
+
+//     None
+//     // Some((RuleBody::Or(part_a, part_b), m))
+// }
+
+fn parse_body(input: &mut Peekable<LexerIter>) -> RuleBody {
+    match input.peek() {
+        Some(Lex::Char(c)) => {
+            let body = RuleBody::Term(*c);
+            input.next();
+            body
+        }
+        Some(Lex::Num(_)) => parse_refs(input),
+        _ => panic!("Invalid token"),
+    }
 }
 
-fn parse(input: &[Lex]) -> Option<Rule> {
-    let (id, _) = parse_id(&input)?;
-    let _ = parse_column(&input[1..])?;
-    let (body, _) = parse_body(&input[2..])?;
-    Some(Rule { id, body })
+pub fn parse(input: &str) -> Rule {
+    println!("{}", input);
+
+    let mut lex = LexerIter::new(input).peekable();
+    let id = parse_id(&mut lex);
+    assert_eq!(lex.next(), Some(Lex::Column));
+    let body = parse_body(&mut lex);
+    Rule { id, body }
 }
 
 #[cfg(test)]
@@ -117,8 +116,7 @@ mod test {
     use super::*;
 
     fn parse_rule(input: &str) -> Rule {
-        let tokens = LexerIter::new(&input).collect::<Vec<_>>();
-        parse(&tokens).unwrap()
+        parse(&input)
     }
 
     #[test]
