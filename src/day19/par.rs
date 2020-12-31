@@ -12,8 +12,8 @@ fn format_refs(input: &[usize]) -> String {
 
 #[derive(Debug, PartialEq)]
 pub struct Rule {
-    id: usize,
-    body: RuleBody,
+    pub id: usize,
+    pub body: RuleBody,
 }
 impl fmt::Display for Rule {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -22,7 +22,7 @@ impl fmt::Display for Rule {
 }
 
 #[derive(Debug, PartialEq)]
-enum RuleBody {
+pub enum RuleBody {
     Term(char),
     Refs(Vec<usize>),
     Or(Vec<usize>, Vec<usize>),
@@ -102,8 +102,6 @@ fn parse_body(input: &mut Peekable<LexerIter>) -> RuleBody {
 }
 
 pub fn parse(input: &str) -> Rule {
-    println!("{}", input);
-
     let mut lex = LexerIter::new(input).peekable();
     let id = parse_id(&mut lex);
     assert_eq!(lex.next(), Some(Lex::Column));
