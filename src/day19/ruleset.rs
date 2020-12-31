@@ -19,9 +19,18 @@ impl RuleSet {
         RuleSet::new(rules)
     }
 
+    pub fn patch(&mut self, line: &str) {
+        let Rule { id, body } = par::parse(line);
+        self.inner.insert(id, body);
+    }
+
     pub fn check(&self, input: &str) -> bool {
         let start = self.inner.get(&0).expect("Rule 0 not found");
-        let checked = self.check_rule(input, start);
+        let checked = self.check_rule(input, start, true);
+
+        if let Some(n) = checked {
+            println!("match checked {} of {}", n, input.len());
+        }
 
         match checked {
             Some(n) if n == input.len() => true,
@@ -29,24 +38,44 @@ impl RuleSet {
         }
     }
 
-    pub fn check_rule(&self, input: &str, rule: &RuleBody) -> Option<usize> {
+    pub fn check_rule(&self, input: &str, rule: &RuleBody, eol: bool) -> Option<usize> {
+        print!("Check {} on rule {}, EOL: {}", input, rule, eol);
+
         match rule {
             RuleBody::Term(c) => match input.chars().next() {
-                Some(m) if m == *c => return Some(1),
-                _ => return None,
+                Some(m) if m == *c => {
+                    if eol && input.len() != 1 {
+                        print!(" yes, but NO because of EOL\n");
+                        None
+                    } else {
+                        print!(" yes\n");
+                        Some(1)
+                    }
+                }
+                _ => {
+                    print!(" no\n");
+                    None
+                }
             },
-            RuleBody::Refs(refs) => self.check_refs(&input, refs),
-            RuleBody::Or(a, b) => self
-                .check_refs(&input, a)
-                .or_else(|| self.check_refs(&input, b)),
+            RuleBody::Refs(refs) => {
+                print!("\n");
+                self.check_refs(&input, refs, eol)
+            }
+            RuleBody::Or(a, b) => {
+                print!("\n");
+                self.check_refs(&input, a, eol)
+                    .or_else(|| self.check_refs(&input, b, eol))
+            }
         }
     }
 
-    pub fn check_refs(&self, input: &str, refs: &[usize]) -> Option<usize> {
+    pub fn check_refs(&self, input: &str, refs: &[usize], eol: bool) -> Option<usize> {
         let mut total = 0;
-        for id in refs {
+        for (idx, id) in refs.iter().enumerate() {
+            let is_last = refs.len() - 1 == idx;
             let rule = self.inner.get(id).expect("Ref not found");
-            match self.check_rule(&input[total..], rule) {
+
+            match self.check_rule(&input[total..], rule, is_last & eol) {
                 Some(n) => total += n,
                 _ => return None,
             }

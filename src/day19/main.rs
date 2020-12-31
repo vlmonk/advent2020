@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut section = raw.split("\n\n");
 
     let rules_raw = section.next().ok_or("Invalid input")?;
-    let set = RuleSet::parse(rules_raw);
+    let mut set = RuleSet::parse(rules_raw);
 
     let lines = section
         .next()
@@ -20,8 +20,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect::<Vec<_>>();
 
     let total = lines.iter().filter(|l| set.check(l)).count();
-
     println!("Task A: {}", total);
+
+    set.patch("8: 42 | 42 8");
+    set.patch("11: 42 31 | 42 11 31");
+
+    let total = lines.iter().filter(|l| set.check(l)).count();
+    println!("Task B: {}", total);
 
     Ok(())
 }
