@@ -1,3 +1,9 @@
+mod lexer;
+
+use lexer::MathLexer;
+
 fn main() {
-    println!("Placeholder for day 18");
+    let input = "1 + 2 * 3 + 4 * 5 + 6";
+    let mut lexer = MathLexer::new(input);
+    dbg!(lexer.next());
 }
