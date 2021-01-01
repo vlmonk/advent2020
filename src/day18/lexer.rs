@@ -18,7 +18,7 @@ pub enum Token {
 }
 
 pub struct MathLexer<'a> {
-    inner: MathLexerInner<'a>,
+    inner: Peekable<MathLexerInner<'a>>,
 }
 
 struct MathLexerInner<'a> {
@@ -29,8 +29,12 @@ struct MathLexerInner<'a> {
 impl<'a> MathLexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
-            inner: MathLexerInner::new(input),
+            inner: MathLexerInner::new(input).peekable(),
         }
+    }
+
+    pub fn peek(&mut self) -> Option<&Token> {
+        self.inner.peek()
     }
 }
 
