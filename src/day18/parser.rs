@@ -19,7 +19,13 @@ enum Op {
     Add,
 }
 
-pub fn parse_expr(lexer: &mut MathLexer) -> Expr {
+fn op_power(op: &Op) -> (u8, u8) {
+    match op {
+        Op::Add => (1, 2),
+    }
+}
+
+pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
     let mut lhs = match lexer.next() {
         Some(Token::Num(v)) => Expr::Num(v),
         Some(t) => panic!("bad token: {:?}", t),
@@ -34,8 +40,14 @@ pub fn parse_expr(lexer: &mut MathLexer) -> Expr {
             _ => panic!("no input"),
         };
 
+        let (l_pb, r_pb) = op_power(&op);
+
+        if l_pb < min_pb {
+            break;
+        }
+
         lexer.next();
-        let rhs = parse_expr(lexer);
+        let rhs = parse_expr(lexer, r_pb);
         lhs = Expr::Add(Box::new(lhs), Box::new(rhs));
     }
 
@@ -44,7 +56,7 @@ pub fn parse_expr(lexer: &mut MathLexer) -> Expr {
 
 pub fn parse(input: &str) -> Expr {
     let mut lexer = MathLexer::new(input);
-    parse_expr(&mut lexer)
+    parse_expr(&mut lexer, 0)
 }
 
 #[cfg(test)]
@@ -61,5 +73,11 @@ mod test {
     fn test_parse_add() {
         let expr = parse("5+ 6");
         assert_eq!(expr.to_string(), "(+ 5 6)")
+    }
+
+    #[test]
+    fn test_parse_associativity() {
+        let expr = parse("5 + 6 + 1");
+        assert_eq!(expr.to_string(), "(+ (+ 5 6) 1)")
     }
 }
