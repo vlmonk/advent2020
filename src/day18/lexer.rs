@@ -10,7 +10,7 @@ trait Lexer<T>: Iterator<Item = T> {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum MathLexem {
+pub enum Token {
     Num(usize),
     Add,
     Mul,
@@ -44,7 +44,7 @@ impl<'a> MathLexerInner<'a> {
 }
 
 impl<'a> Iterator for MathLexer<'a> {
-    type Item = MathLexem;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -52,7 +52,7 @@ impl<'a> Iterator for MathLexer<'a> {
 }
 
 impl<'a> Iterator for MathLexerInner<'a> {
-    type Item = MathLexem;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -78,13 +78,13 @@ impl<'a> Iterator for MathLexerInner<'a> {
                 let buf: String = buf.iter().collect();
                 let value = buf.parse::<usize>().unwrap();
 
-                Some(MathLexem::Num(value))
+                Some(Token::Num(value))
             }
-            Some(c) if c == '+' => Some(MathLexem::Add),
-            Some(c) if c == '*' => Some(MathLexem::Mul),
+            Some(c) if c == '+' => Some(Token::Add),
+            Some(c) if c == '*' => Some(Token::Mul),
             None if !self.eol => {
                 self.eol = true;
-                Some(MathLexem::Eol)
+                Some(Token::Eol)
             }
             _ => None,
         }
@@ -100,7 +100,7 @@ mod test {
         let input = "42";
         assert_eq!(
             MathLexer::new(input).collect::<Vec<_>>(),
-            vec![MathLexem::Num(42), MathLexem::Eol]
+            vec![Token::Num(42), Token::Eol]
         )
     }
 
@@ -110,12 +110,12 @@ mod test {
         assert_eq!(
             MathLexer::new(input).collect::<Vec<_>>(),
             vec![
-                MathLexem::Num(2),
-                MathLexem::Add,
-                MathLexem::Num(3),
-                MathLexem::Mul,
-                MathLexem::Num(1),
-                MathLexem::Eol
+                Token::Num(2),
+                Token::Add,
+                Token::Num(3),
+                Token::Mul,
+                Token::Num(1),
+                Token::Eol
             ]
         )
     }
