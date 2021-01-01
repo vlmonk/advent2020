@@ -28,6 +28,11 @@ fn op_power(op: &Op) -> (u8, u8) {
 pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
     let mut lhs = match lexer.next() {
         Some(Token::Num(v)) => Expr::Num(v),
+        Some(Token::Lbr) => {
+            let expr = parse_expr(lexer, 0);
+            lexer.next();
+            expr
+        }
         Some(t) => panic!("bad token: {:?}", t),
         _ => panic!("no input"),
     };
@@ -35,6 +40,7 @@ pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
     loop {
         let op = match lexer.peek() {
             Some(Token::Eol) => break,
+            Some(Token::Rbr) => break,
             Some(Token::Add) => Op::Add,
             Some(t) => panic!("bad token: {:?}", t),
             _ => panic!("no input"),
@@ -79,5 +85,17 @@ mod test {
     fn test_parse_associativity() {
         let expr = parse("5 + 6 + 1");
         assert_eq!(expr.to_string(), "(+ (+ 5 6) 1)")
+    }
+
+    #[test]
+    fn test_simple_brackets() {
+        let expr = parse("(5)");
+        assert_eq!(expr.to_string(), "5")
+    }
+
+    #[test]
+    fn test_advanced_brackets() {
+        let expr = parse("5 + (4 + (1 + 2)) + 1");
+        assert_eq!(expr.to_string(), "(+ (+ 5 (+ 4 (+ 1 2))) 1)")
     }
 }

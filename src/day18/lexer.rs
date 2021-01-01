@@ -14,6 +14,8 @@ pub enum Token {
     Num(usize),
     Add,
     Mul,
+    Lbr,
+    Rbr,
     Eol,
 }
 
@@ -86,6 +88,8 @@ impl<'a> Iterator for MathLexerInner<'a> {
             }
             Some(c) if c == '+' => Some(Token::Add),
             Some(c) if c == '*' => Some(Token::Mul),
+            Some(c) if c == '(' => Some(Token::Lbr),
+            Some(c) if c == ')' => Some(Token::Rbr),
             None if !self.eol => {
                 self.eol = true;
                 Some(Token::Eol)
