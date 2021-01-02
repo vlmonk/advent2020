@@ -32,18 +32,28 @@ enum Op {
     Mul,
 }
 
-fn op_power(op: &Op) -> (u8, u8) {
+fn op_power_a(op: &Op) -> (u8, u8) {
     match op {
         Op::Add => (1, 2),
         Op::Mul => (1, 2),
     }
 }
 
-pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
+fn op_power_b(op: &Op) -> (u8, u8) {
+    match op {
+        Op::Add => (3, 4),
+        Op::Mul => (1, 2),
+    }
+}
+
+fn parse_expr<F>(lexer: &mut MathLexer, min_pb: u8, f: F) -> Expr
+where
+    F: Fn(&Op) -> (u8, u8) + Copy,
+{
     let mut lhs = match lexer.next() {
         Some(Token::Num(v)) => Expr::Num(v),
         Some(Token::Lbr) => {
-            let expr = parse_expr(lexer, 0);
+            let expr = parse_expr(lexer, 0, f);
             lexer.next();
             expr
         }
@@ -61,14 +71,14 @@ pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
             _ => panic!("no input"),
         };
 
-        let (l_pb, r_pb) = op_power(&op);
+        let (l_pb, r_pb) = f(&op);
 
         if l_pb < min_pb {
             break;
         }
 
         lexer.next();
-        let rhs = parse_expr(lexer, r_pb);
+        let rhs = parse_expr(lexer, r_pb, f);
         lhs = match op {
             Op::Add => Expr::Add(Box::new(lhs), Box::new(rhs)),
             Op::Mul => Expr::Mul(Box::new(lhs), Box::new(rhs)),
@@ -78,9 +88,14 @@ pub fn parse_expr(lexer: &mut MathLexer, min_pb: u8) -> Expr {
     lhs
 }
 
-pub fn parse(input: &str) -> Expr {
+pub fn parse_a(input: &str) -> Expr {
     let mut lexer = MathLexer::new(input);
-    parse_expr(&mut lexer, 0)
+    parse_expr(&mut lexer, 0, op_power_a)
+}
+
+pub fn parse_b(input: &str) -> Expr {
+    let mut lexer = MathLexer::new(input);
+    parse_expr(&mut lexer, 0, op_power_b)
 }
 
 #[cfg(test)]
@@ -89,35 +104,35 @@ mod test {
 
     #[test]
     fn test_parse_num() {
-        let expr = parse("42");
+        let expr = parse_a("42");
         assert_eq!(expr.to_string(), "42");
         assert_eq!(expr.value(), 42);
     }
 
     #[test]
     fn test_parse_add() {
-        let expr = parse("5+ 6");
+        let expr = parse_a("5+ 6");
         assert_eq!(expr.to_string(), "(+ 5 6)");
         assert_eq!(expr.value(), 11);
     }
 
     #[test]
     fn test_parse_associativity() {
-        let expr = parse("5 + 6 + 1");
+        let expr = parse_a("5 + 6 + 1");
         assert_eq!(expr.to_string(), "(+ (+ 5 6) 1)");
         assert_eq!(expr.value(), 12);
     }
 
     #[test]
     fn test_simple_brackets() {
-        let expr = parse("(5)");
+        let expr = parse_a("(5)");
         assert_eq!(expr.to_string(), "5");
         assert_eq!(expr.value(), 5);
     }
 
     #[test]
     fn test_advanced_brackets() {
-        let expr = parse("5 + (4 * (1 + 2)) + 1");
+        let expr = parse_a("5 + (4 * (1 + 2)) + 1");
         assert_eq!(expr.to_string(), "(+ (+ 5 (* 4 (+ 1 2))) 1)");
         assert_eq!(expr.value(), 18);
     }
